@@ -1,0 +1,81 @@
+version: '3.5'
+services:
+  mysql_m1:
+    image: mysql:8.0.14
+    container_name: mysql-m1
+    ports:
+      - '3311:3306'
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    volumes:
+      - mysql-m1-volume:/var/lib/mysql
+    networks:
+      - back-tier
+    environment:
+      MYSQL_ROOT_PASSWORD: '111111'
+      MYSQL_DATABASE: 'todolist'
+      MYSQL_ROOT_HOST: '%'
+  mysql_s1:
+    image: mysql:8.0.14
+    container_name: mysql-s1
+    ports:
+      - '4311:3306'
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    volumes:
+      - mysql-s1-volume:/var/lib/mysql
+    networks:
+      - back-tier
+    environment:
+      MYSQL_ROOT_PASSWORD: '111111'
+      MYSQL_DATABASE: 'todolist'
+      MYSQL_ROOT_HOST: '%'
+
+  mysql_m2:
+    image: mysql:8.0.14
+    container_name: mysql-m2
+    ports:
+      - '3312:3306'
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    volumes:
+      - mysql-m2-volume:/var/lib/mysql
+    networks:
+      - back-tier
+    environment:
+      MYSQL_ROOT_PASSWORD: '111111'
+      MYSQL_DATABASE: 'todolist'
+      MYSQL_ROOT_HOST: '%'
+  mysql_s2:
+    image: mysql:8.0.14
+    container_name: mysql-s2
+    ports:
+      - '4312:3306'
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    volumes:
+      - mysql-s2-volume:/var/lib/mysql
+    networks:
+      - back-tier
+    environment:
+      MYSQL_ROOT_PASSWORD: '111111'
+      MYSQL_DATABASE: 'todolist'
+      MYSQL_ROOT_HOST: '%'
+
+volumes:
+  mysql-m1-volume:
+  mysql-s1-volume:
+  mysql-m2-volume:
+  mysql-s2-volume:
+
+networks:
+  back-tier:
+    driver: bridge

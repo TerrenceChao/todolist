@@ -1,11 +1,12 @@
 package com.example.todolist.db.rmdb.entity;
 
+import com.alibaba.fastjson.JSONArray;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
-import java.util.Date;
+import java.time.ZonedDateTime;
 
 /**
  * 寫入用
@@ -27,15 +28,23 @@ public class TodoTask {
 
     private String content;
 
-    /** JSON */
+    /**
+     * JSON
+     * [
+     *      { name, hash, url },
+     *      { name, hash, url },
+     *      ...
+     * ]
+     */
     private String attachments;
 
     /** partition key */
     private Integer weekOfYear;
 
-    private Date createdAt;
+    private String createdAt;
 
-    private Date deletedAt;
+    /** soft delete */
+    private String deletedAt;
 
-    private Date done;
+    private String done;
 }

@@ -1,22 +1,24 @@
 package com.example.todolist.service;
 
 import com.example.todolist.db.rmdb.entity.TodoTask;
-import com.example.todolist.model.BatchVo;
+import com.example.todolist.model.bo.TodoTaskBo;
+import com.example.todolist.model.vo.BatchVo;
+import com.example.todolist.model.vo.TodoTaskVo;
 
-import java.util.Date;
+import java.time.ZonedDateTime;
 
 public interface TodoService {
 
-    void create(TodoTask todoTask);
+    Long create(TodoTaskBo todoTaskBo);
 
-    BatchVo getList(Date startTime, Integer limit);
+    BatchVo getList(ZonedDateTime startTime, String seq, Integer batch);
 
     /**
      * @param tid PK
      * @param partitionKey weekOfYear
      * @return
      */
-    Object getOne(Long tid, Integer partitionKey);
+    TodoTaskVo getOne(Long tid, Integer partitionKey);
 
     /**
      * 暫時不實現

@@ -1,25 +1,70 @@
 package com.example.todolist.service.impl;
 
+import com.alibaba.fastjson.JSONObject;
 import com.example.todolist.db.rmdb.entity.TodoTask;
-import com.example.todolist.model.BatchVo;
+import com.example.todolist.db.rmdb.repo.TodoListRepository;
+import com.example.todolist.db.rmdb.repo.TodoTaskRepository;
+import com.example.todolist.model.bo.TodoTaskBo;
+import com.example.todolist.model.vo.BatchVo;
+import com.example.todolist.model.vo.TodoListVo;
+import com.example.todolist.model.vo.TodoTaskVo;
 import com.example.todolist.service.TodoService;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
+import java.time.ZonedDateTime;
+import java.util.*;
 
 @Slf4j
 @Service
+@AllArgsConstructor
 public class TodoServiceImpl implements TodoService {
 
-    @Override
-    public void create(TodoTask todoTask) {
+    @Autowired
+    private TodoListRepository todoListRepo;
 
+    @Autowired
+    private TodoTaskRepository taskRepo;
+
+    @Override
+    public Long create(TodoTaskBo todoTaskBo) {
+//        ZonedDateTime time = ZonedDateTime().now();
+        Date now = new Date();
+        Integer weekOfYear = 1; // get week of year
+        return taskRepo.insert(
+                todoTaskBo.getTitle(),
+                todoTaskBo.getContent(),
+                todoTaskBo.getAttachments(),
+                weekOfYear,
+                now.toString()
+        );
     }
 
+    /**
+     * @param startTime
+     * @param seq
+     * @param batch
+     * @return
+     */
     @Override
-    public BatchVo getList(Date startTime, Integer limit) {
-        return null;
+    public BatchVo getList(ZonedDateTime startTime, String seq, Integer batch) {
+        List<TodoListVo> vos = Objects.isNull(seq) ?
+                todoListRepo.getList(startTime, batch + 1) :
+                todoListRepo.getList(startTime, seq, batch + 1);
+        if (vos.isEmpty()) {
+            return new BatchVo(batch);
+        }
+
+        JSONObject next = vos.remove(vos.size() - 1).toNext();
+        List<TodoTaskVo> taskVos = mergeTasks(vos);
+        return new BatchVo(
+                vos,
+                batch, // TODO batch 和 task size 不一樣, 調整!?
+                taskVos.size(),
+                next
+            );
     }
 
     /**
@@ -28,8 +73,8 @@ public class TodoServiceImpl implements TodoService {
      * @return
      */
     @Override
-    public Object getOne(Long tid, Integer partitionKey) {
-        return null;
+    public TodoTaskVo getOne(Long tid, Integer partitionKey) {
+        return taskRepo.findOne(tid, partitionKey);
     }
 
     /**
@@ -54,5 +99,14 @@ public class TodoServiceImpl implements TodoService {
     @Override
     public void delete(Long tid) {
 
+    }
+
+    private List<TodoTaskVo> mergeTasks(List<TodoListVo> listVos) {
+        List<TodoTaskVo> tasks = new ArrayList<>();
+        for (TodoListVo listVo : listVos) {
+            tasks.addAll(listVo.toTaskList());
+        }
+
+        return tasks;
     }
 }

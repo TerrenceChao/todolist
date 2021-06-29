@@ -1,12 +1,8 @@
 package com.example.todolist;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.example.todolist.db.rmdb.entity.Course;
 import com.example.todolist.db.rmdb.entity.TodoTask;
-import com.example.todolist.db.rmdb.entity.User;
-import com.example.todolist.db.rmdb.mapper.CourseMapper;
 import com.example.todolist.db.rmdb.mapper.TodoTaskMapper;
-import com.example.todolist.db.rmdb.mapper.UserMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
@@ -14,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -28,6 +25,7 @@ class TodolistApplicationTests {
 
     /**
      * test sharding
+     * 平均寫入 分散寫入流量
      */
     @Test
     void addTodoTaskDb() {
@@ -39,7 +37,7 @@ class TodolistApplicationTests {
                     .setTitle("todo " + cnt)
                     .setContent(UUID.randomUUID().toString())
                     .setWeekOfYear(t.intValue())
-                    .setCreatedAt(new Date());
+                    .setCreatedAt(null);
             todoTaskMapper.insert(task);
 
             // TODO 透過這方式來找到 tid !!
@@ -49,96 +47,27 @@ class TodolistApplicationTests {
         System.out.println(cost + " ms");
     }
 
-    @Test
-    void findOneTodoTaskDb() {
-        QueryWrapper<TodoTask> wrapper = new QueryWrapper<>();
-        wrapper.eq("tid", 616029305360613376L);
-        wrapper.eq("week_of_year", 668);
-        List<TodoTask> tasks = todoTaskMapper.selectList(wrapper);
-        tasks.forEach(t -> log.info("就一筆清單! {}", t));
-    }
-
+    /**
+     * 多庫多表查詢 造成壓力大
+     */
     @Test
     void findTodoTasksDb() {
         QueryWrapper<TodoTask> wrapper = new QueryWrapper<>();
-        wrapper.ge("tid", 616029305360613376L);
+        wrapper.ge("created_at", "2021-06-28 14:13:52");
         wrapper.last(" limit 3");
         List<TodoTask> tasks = todoTaskMapper.selectList(wrapper);
         log.info("清單列表吧! {}", tasks.toString());
     }
 
-
-    @Autowired
-    private CourseMapper courseMapper;
-
-    @Autowired
-    private UserMapper userMapper;
-
-    @Test
-    public void addUserDb() {
-        User user = new User()
-                .setUsername("lucy")
-                .setUstatus("a");
-        userMapper.insert(user);
-    }
-
-    @Test
-    void findUserDb() {
-        QueryWrapper<User> wrapper = new QueryWrapper<>();
-        wrapper.eq("user_id", 615588507267629057L);
-        User user = userMapper.selectOne(wrapper);
-        System.out.println(user);
-    }
-
-
     /**
-     * test sharding
+     * 單一筆資料。單庫單表查詢 速度快
      */
     @Test
-    void addCourseDb() {
-        int cnt = 20;
-        while (cnt-- > 0) {
-            Long t = System.currentTimeMillis();
-            Course course = new Course()
-                    .setCname("java demo " + cnt)
-                    .setUserId(100L + t % 10)
-                    .setCstatus("Sharding");
-            courseMapper.insert(course);
-        }
-    }
-
-    @Test
-    void findCourseDb() {
-        QueryWrapper<Course> wrapper = new QueryWrapper<>();
-        wrapper.ge("cid", 615697769641803777L);
-        wrapper.last(" limit 3");
-        List<Course> courses = courseMapper.selectList(wrapper);
-        courses.forEach(c -> log.info("來吧! {}", c));
-    }
-
-
-
-
-    /**
-     * test partition
-     */
-    @Test
-    void addCourse() {
-        int cnt = 10;
-        while (cnt-- > 0) {
-            Course course = new Course()
-                    .setCname("java " + cnt)
-                    .setUserId(100L)
-                    .setCstatus("Normal " + cnt);
-            courseMapper.insert(course);
-        }
-    }
-
-    @Test
-    void findCourse() {
-        QueryWrapper<Course> wrapper = new QueryWrapper<>();
-        wrapper.eq("cid", 614958500048535553L);
-        Course course = courseMapper.selectOne(wrapper);
-        System.out.println(course);
+    void findOneTodoTaskDb() {
+        QueryWrapper<TodoTask> wrapper = new QueryWrapper<>();
+        wrapper.eq("tid", 1409394602225553410L);
+        wrapper.eq("week_of_year", 113); // partition_key
+        TodoTask task = todoTaskMapper.selectOne(wrapper);
+        log.info("就一筆清單! {}", task);
     }
 }

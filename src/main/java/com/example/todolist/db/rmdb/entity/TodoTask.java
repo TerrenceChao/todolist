@@ -6,7 +6,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
-import java.time.ZonedDateTime;
+import java.util.Date;
 
 /**
  * 寫入用
@@ -41,10 +41,10 @@ public class TodoTask {
     /** partition key */
     private Integer weekOfYear;
 
-    private String createdAt;
+    private Date createdAt;
 
     /** soft delete */
-    private String deletedAt;
+    private Date deletedAt;
 
-    private String done;
+    private Date done;
 }

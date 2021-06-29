@@ -1,6 +1,7 @@
 package com.example.todolist;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.example.todolist.common.Constant;
 import com.example.todolist.db.rmdb.entity.TodoTask;
 import com.example.todolist.db.rmdb.mapper.TodoTaskMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -10,7 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.time.ZonedDateTime;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -53,7 +54,9 @@ class TodolistApplicationTests {
     @Test
     void findTodoTasksDb() {
         QueryWrapper<TodoTask> wrapper = new QueryWrapper<>();
+//        wrapper.ge("created_at", new SimpleDateFormat(Constant.DATETIME_FORMAT).format(new Date()));
         wrapper.ge("created_at", "2021-06-28 14:13:52");
+        wrapper.orderByAsc("tid");
         wrapper.last(" limit 3");
         List<TodoTask> tasks = todoTaskMapper.selectList(wrapper);
         log.info("清單列表吧! {}", tasks.toString());

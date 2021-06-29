@@ -4,7 +4,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.Data;
 
-import java.time.ZonedDateTime;
+import java.util.Date;
 
 /**
  * 讀取用
@@ -35,13 +35,13 @@ public class TodoList {
      *      <and> 28
      *      <and> null OR 2021-05-30 11:22:33
      */
-    private JSONArray todoTasks;
+    private String todoTasks;
 
     /**
      * 10 筆 todo_task 的第一筆 created_at
      * ??? sharding key 平衡讀取流量
      */
-    private ZonedDateTime firstCreatedAt;
+    private Date firstCreatedAt;
 
     /**
      * 第一筆 created_at 的月份
@@ -58,5 +58,5 @@ public class TodoList {
     /**
      * 10 筆 todo_task 的最後一筆 created_at
      */
-    private ZonedDateTime lastCreatedAt;
+    private Date lastCreatedAt;
 }

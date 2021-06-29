@@ -5,13 +5,13 @@ import com.example.todolist.model.bo.TodoTaskBo;
 import com.example.todolist.model.vo.BatchVo;
 import com.example.todolist.model.vo.TodoTaskVo;
 
-import java.time.ZonedDateTime;
+import java.util.Date;
 
 public interface TodoService {
 
     Long create(TodoTaskBo todoTaskBo);
 
-    BatchVo getList(ZonedDateTime startTime, String seq, Integer batch);
+    BatchVo getList(Date startTime, String seq, Integer batch);
 
     /**
      * @param tid PK

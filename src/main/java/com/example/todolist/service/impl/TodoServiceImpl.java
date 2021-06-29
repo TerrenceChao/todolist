@@ -2,10 +2,10 @@ package com.example.todolist.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
 import com.example.todolist.db.rmdb.entity.TodoTask;
-import com.example.todolist.db.rmdb.repo.TodoListRepository;
 import com.example.todolist.db.rmdb.repo.TodoTaskRepository;
 import com.example.todolist.model.bo.TodoTaskBo;
 import com.example.todolist.model.vo.BatchVo;
+import com.example.todolist.model.vo.TodoSeqVo;
 import com.example.todolist.model.vo.TodoListVo;
 import com.example.todolist.model.vo.TodoTaskVo;
 import com.example.todolist.service.TodoService;
@@ -14,7 +14,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.time.ZonedDateTime;
 import java.util.*;
 
 @Slf4j
@@ -22,15 +21,12 @@ import java.util.*;
 @AllArgsConstructor
 public class TodoServiceImpl implements TodoService {
 
-    @Autowired
-    private TodoListRepository todoListRepo;
 
     @Autowired
     private TodoTaskRepository taskRepo;
 
     @Override
     public Long create(TodoTaskBo todoTaskBo) {
-//        ZonedDateTime time = ZonedDateTime().now();
         Date now = new Date();
         Integer weekOfYear = 1; // get week of year
         return taskRepo.insert(
@@ -38,32 +34,53 @@ public class TodoServiceImpl implements TodoService {
                 todoTaskBo.getContent(),
                 todoTaskBo.getAttachments(),
                 weekOfYear,
-                now.toString()
+                now
         );
     }
 
     /**
      * @param startTime
-     * @param seq
-     * @param batch
+     * @param seq tid
+     * @param limit
      * @return
      */
     @Override
-    public BatchVo getList(ZonedDateTime startTime, String seq, Integer batch) {
-        List<TodoListVo> vos = Objects.isNull(seq) ?
-                todoListRepo.getList(startTime, batch + 1) :
-                todoListRepo.getList(startTime, seq, batch + 1);
-        if (vos.isEmpty()) {
-            return new BatchVo(batch);
+    public BatchVo getList(Date startTime, String seq, Integer limit) {
+
+        List<TodoTask> tasks;
+        if (Objects.isNull(seq)) {
+            tasks = taskRepo.getList(startTime, limit + 1);
+        } else {
+            // 這裡和 HistoryListService.getList 的 seq 格式不統一
+            Long tid = Long.valueOf(seq);
+            tasks = taskRepo.getList(
+                    startTime,
+                    tid,
+                    limit + 1);
         }
 
-        JSONObject next = vos.remove(vos.size() - 1).toNext();
-        List<TodoTaskVo> taskVos = mergeTasks(vos);
+        if (tasks.isEmpty()) {
+            return new BatchVo(limit);
+        }
+
+        List<TodoTaskVo> taskVos = toTodoTaskVos(tasks);
+        int lastOne = taskVos.size() - 1;
+        if (lastOne == 0) {
+            return new BatchVo(
+                    taskVos,
+                    limit,
+                    taskVos.size(),
+                    null
+            );
+        }
+
+        TodoTaskVo lastTaskVo = taskVos.remove(lastOne);
+
         return new BatchVo(
-                vos,
-                batch, // TODO batch 和 task size 不一樣, 調整!?
+                taskVos,
+                limit,
                 taskVos.size(),
-                next
+                lastTaskVo.toNext()
             );
     }
 
@@ -74,7 +91,8 @@ public class TodoServiceImpl implements TodoService {
      */
     @Override
     public TodoTaskVo getOne(Long tid, Integer partitionKey) {
-        return taskRepo.findOne(tid, partitionKey);
+        TodoTask task = taskRepo.findOne(tid, partitionKey);
+        return new TodoTaskVo(task);
     }
 
     /**
@@ -101,12 +119,12 @@ public class TodoServiceImpl implements TodoService {
 
     }
 
-    private List<TodoTaskVo> mergeTasks(List<TodoListVo> listVos) {
-        List<TodoTaskVo> tasks = new ArrayList<>();
-        for (TodoListVo listVo : listVos) {
-            tasks.addAll(listVo.toTaskList());
+    private List<TodoTaskVo> toTodoTaskVos(List<TodoTask> tasks) {
+        List<TodoTaskVo> taskVos = new ArrayList<>();
+        for (TodoTask task : tasks) {
+            taskVos.add(new TodoTaskVo(task));
         }
 
-        return tasks;
+        return taskVos;
     }
 }

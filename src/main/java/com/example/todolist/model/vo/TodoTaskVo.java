@@ -1,12 +1,16 @@
 package com.example.todolist.model.vo;
 
-import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.example.todolist.db.rmdb.entity.TodoTask;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
+
+import java.util.Date;
 
 @Data
 @Accessors(chain = true)
+@NoArgsConstructor
 public class TodoTaskVo extends BaseVo {
 
     private Long tid;
@@ -23,17 +27,17 @@ public class TodoTaskVo extends BaseVo {
      *      ...
      * ]
      */
-    private JSONArray attachments;
+    private String attachments;
 
     /** partition key */
     private Integer weekOfYear;
 
-    private String createdAt;
+    private Date createdAt;
 
     /** soft delete */
-    private String deletedAt;
+    private Date deletedAt;
 
-    private String done;
+    private Date done;
 
     public TodoTaskVo(TodoTask task) {
         setTid(task.getTid());
@@ -46,11 +50,11 @@ public class TodoTaskVo extends BaseVo {
         setDone(task.getDone());
     }
 
-//    public JSONObject toNext() {
-//        JSONObject json = new JSONObject();
-//        json.put("createdAt", createdAt);
-//        json.put("tid", tid);
-//
-//        return json;
-//    }
+    public JSONObject toNext() {
+        JSONObject json = new JSONObject();
+        json.put("seq", tid);
+        json.put("createdAt", createdAt);
+
+        return json;
+    }
 }

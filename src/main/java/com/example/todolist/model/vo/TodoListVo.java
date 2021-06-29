@@ -5,10 +5,13 @@ import com.alibaba.fastjson.JSONObject;
 import com.example.todolist.db.rmdb.entity.TodoList;
 import lombok.Data;
 import lombok.experimental.Accessors;
+import lombok.extern.slf4j.Slf4j;
 
-import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
+@Slf4j
 @Data
 @Accessors(chain = true)
 public class TodoListVo extends BaseVo {
@@ -18,9 +21,9 @@ public class TodoListVo extends BaseVo {
      */
     private Long lid;
 
-    private JSONArray todoTasks;
+    private String todoTasks;
 
-    private ZonedDateTime firstCreatedAt;
+    private Date firstCreatedAt;
 
     /**
      * 第一筆 created_at 的月份
@@ -37,7 +40,7 @@ public class TodoListVo extends BaseVo {
     /**
      * 10 筆 todo_task 的最後一筆 created_at
      */
-    private ZonedDateTime lastCreatedAt;
+    private Date lastCreatedAt;
 
     public TodoListVo(TodoList todoList) {
         setLid(todoList.getLid());
@@ -57,7 +60,45 @@ public class TodoListVo extends BaseVo {
         return json;
     }
 
-    public List<TodoTaskVo> toTaskList() {
-        for (Object item : JSONArray.)
+    /**
+     *
+     * @param seq
+     * @return
+     */
+    public static TodoSeqVo parseSeq(String seq) {
+        log.info("parse seq: {}", seq);
+        String[] values = seq.split("-");
+
+        TodoSeqVo seqVo = new TodoSeqVo()
+            .setMonth(Integer.valueOf(values[0]))
+            .setWeekOfYear(Integer.valueOf(values[1]))
+            .setLid(Long.valueOf(values[2]));
+
+        log.info("parse content: {}", seqVo);
+
+        return seqVo;
     }
+
+    public List<TodoTaskVo> toTaskList() {
+        JSONArray attachList = JSONArray.parseArray(todoTasks);
+
+        List<TodoTaskVo> taskVos = new ArrayList<>();
+        for (int i = attachList.size() - 1; i >= 0; i--) {
+            JSONObject taskJson = attachList.getJSONObject(i);
+            TodoTaskVo taskVo = toTaskVo(taskJson);
+            taskVos.add(0, taskVo);
+        }
+
+        return taskVos;
+    }
+
+    private TodoTaskVo toTaskVo(JSONObject taskJson) {
+        return new TodoTaskVo()
+                .setTid(taskJson.getLong("tid"))
+                .setTitle(taskJson.getString("title"))
+                .setContent(taskJson.getString("content"))
+                .setWeekOfYear(taskJson.getInteger("weekOfYear"))
+                .setDeletedAt(taskJson.getDate("deletedAt"));
+    }
+
 }

@@ -38,7 +38,7 @@ class TodolistApplicationTests {
                     .setTitle("todo " + cnt)
                     .setContent(UUID.randomUUID().toString())
                     .setWeekOfYear(t.intValue())
-                    .setCreatedAt(null);
+                    .setCreatedAt(new Date());
             todoTaskMapper.insert(task);
 
             // TODO 透過這方式來找到 tid !!
@@ -55,7 +55,7 @@ class TodolistApplicationTests {
     void findTodoTasksDb() {
         QueryWrapper<TodoTask> wrapper = new QueryWrapper<>();
 //        wrapper.ge("created_at", new SimpleDateFormat(Constant.DATETIME_FORMAT).format(new Date()));
-        wrapper.ge("created_at", "2021-06-28 14:13:52");
+        wrapper.ge("tid", 1409920347892891650L);
         wrapper.orderByAsc("tid");
         wrapper.last(" limit 3");
         List<TodoTask> tasks = todoTaskMapper.selectList(wrapper);
@@ -68,8 +68,8 @@ class TodolistApplicationTests {
     @Test
     void findOneTodoTaskDb() {
         QueryWrapper<TodoTask> wrapper = new QueryWrapper<>();
-        wrapper.eq("tid", 1409394602225553410L);
-        wrapper.eq("week_of_year", 113); // partition_key
+        wrapper.eq("tid", 1409920347892891650L);
+        wrapper.eq("week_of_year", 617); // partition_key
         TodoTask task = todoTaskMapper.selectOne(wrapper);
         log.info("就一筆清單! {}", task);
     }

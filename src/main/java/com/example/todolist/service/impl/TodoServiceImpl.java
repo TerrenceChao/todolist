@@ -6,6 +6,8 @@ import com.example.todolist.model.bo.TodoTaskBo;
 import com.example.todolist.model.vo.BatchVo;
 import com.example.todolist.model.vo.TodoTaskVo;
 import com.example.todolist.service.TodoService;
+import com.example.todolist.util.DatetimeUtil;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +20,11 @@ import java.util.*;
 @AllArgsConstructor
 public class TodoServiceImpl implements TodoService {
 
+    @Autowired
+    private DatetimeUtil dateUtil;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Autowired
     private TodoTaskRepository taskRepo;
@@ -25,7 +32,7 @@ public class TodoServiceImpl implements TodoService {
     @Override
     public Long create(TodoTaskBo todoTaskBo) {
         Date now = new Date();
-        Integer weekOfYear = 1; // get week of year
+        Integer weekOfYear = dateUtil.getWeekOfYear(now);
         Long tid = taskRepo.insert(
                 todoTaskBo.getTitle(),
                 todoTaskBo.getContent(),

@@ -56,7 +56,7 @@ public class HistoryListServiceImpl implements HistoryListService {
         List<TodoListVo> todoListVos = toTodoListVos(todoListCollect);
         int lastBatch = todoListVos.size() - 1;
         TodoListVo lastVo = todoListVos.remove(lastBatch);
-        List<TodoTaskVo> taskVos = mergeTasks(todoListVos);
+        List<TodoTaskVo> taskVos = mergeTodoTaskVos(todoListVos);
 
         return new BatchVo(
                 taskVos,
@@ -76,10 +76,10 @@ public class HistoryListServiceImpl implements HistoryListService {
         return todoListVos;
     }
 
-    private List<TodoTaskVo> mergeTasks(List<TodoListVo> listVos) {
+    private List<TodoTaskVo> mergeTodoTaskVos(List<TodoListVo> listVos) {
         List<TodoTaskVo> tasks = new ArrayList<>();
         for (TodoListVo listVo : listVos) {
-            tasks.addAll(listVo.toTaskList());
+            tasks.addAll(listVo.toTaskVos());
         }
 
         return tasks;

@@ -79,7 +79,11 @@ public class TodoListVo extends BaseVo {
         return seqVo;
     }
 
-    public List<TodoTaskVo> toTaskList() {
+    /**
+     * merged tasks from todo_list
+     * @return
+     */
+    public List<TodoTaskVo> toTaskVos() {
         JSONArray attachList = JSONArray.parseArray(todoTasks);
 
         List<TodoTaskVo> taskVos = new ArrayList<>();
@@ -92,6 +96,11 @@ public class TodoListVo extends BaseVo {
         return taskVos;
     }
 
+    /**
+     * parse json from todo_list
+     * @param taskJson
+     * @return
+     */
     private TodoTaskVo toTaskVo(JSONObject taskJson) {
         return new TodoTaskVo()
                 .setTid(taskJson.getLong("tid"))

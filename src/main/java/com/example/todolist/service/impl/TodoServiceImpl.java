@@ -94,8 +94,13 @@ public class TodoServiceImpl implements TodoService {
      */
     @Override
     public TodoTaskVo getOne(Long tid, Integer partitionKey) {
+        log.info("get a task.  tid: {}  weekOfYear: {}", tid, partitionKey);
         TodoTask task = taskRepo.findOne(tid, partitionKey);
-        log.info("get a task.  TodoTask: {}", task);
+//        TODO def exception
+//        if (Objects.isNull(task)) {
+//            throw new Exception("");
+//        }
+
         return new TodoTaskVo(task);
     }
 

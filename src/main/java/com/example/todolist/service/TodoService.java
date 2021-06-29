@@ -1,15 +1,17 @@
 package com.example.todolist.service;
 
 import com.example.todolist.db.rmdb.entity.TodoTask;
-import com.example.todolist.model.bo.TodoTaskBo;
 import com.example.todolist.model.vo.BatchVo;
 import com.example.todolist.model.vo.TodoTaskVo;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.Date;
+import java.util.List;
 
 public interface TodoService {
 
-    Long create(TodoTaskBo todoTaskBo);
+    TodoTaskVo create(String jsonStr, List<MultipartFile> files) throws IOException;
 
     BatchVo getList(Date startTime, String seq, Integer batch);
 

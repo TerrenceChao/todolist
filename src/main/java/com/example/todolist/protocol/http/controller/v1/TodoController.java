@@ -9,13 +9,17 @@ import com.example.todolist.service.HistoryListService;
 import com.example.todolist.service.TodoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 
+import java.io.IOException;
 import java.util.Date;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -29,6 +33,9 @@ public class TodoController {
     private HistoryListService historyListService;
 
     /**
+     * RequestBody and Multipart on Spring Boot
+     * https://blogs.perficient.com/2020/07/27/requestbody-and-multipart-on-spring-boot/
+     *
      * TODO How WebFlux works?
      *
      * TODO 每 "K" 筆(寫入流量很大怎辦???, 用 MQ 異步解決) 或是 30 secs(寫入過慢) 寫入 DB: todo_list;  >>> !?!??!?
@@ -41,15 +48,15 @@ public class TodoController {
      *          2) write into todo_list; using RabbitMQ
      *          3) clear cache from ??? to latest cid if 1) is done.
      */
-    @PostMapping(value = "/task")
-    public ResponseEntity<Long> create(@RequestBody TodoTaskBo todoTaskBo) {
+    @PostMapping(value = "/task", consumes = { MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE })
+    public ResponseEntity create(@RequestPart("task") String taskJsonStr, @RequestPart("files") List<MultipartFile> files) throws IOException {
         // step 1
-        Long tid = todoService.create(todoTaskBo);
+        TodoTaskVo taskVo = todoService.create(taskJsonStr, files);
 
         // TODO  step 2  1).. 2).. 3)  >> async async async
         // historyListService. ...
 
-        return ResponseResult.successPost(tid);
+        return ResponseResult.successPost(taskVo.getTid());
     }
     
     
@@ -61,7 +68,7 @@ public class TodoController {
      * @return
      */
     @GetMapping(value = "/task/{tid}", produces = "application/json;charset=utf-8")
-    public ResponseEntity<TodoTaskVo> getByTid(@PathVariable Long tid, @NotBlank @RequestParam Integer weekOfYear) {
+    public ResponseEntity getByTid(@PathVariable Long tid, @NotBlank @RequestParam Integer weekOfYear) {
         return ResponseResult.successGet(todoService.getOne(tid, weekOfYear));
     }
 
@@ -74,7 +81,7 @@ public class TodoController {
      * @return
      */
     @GetMapping(value = "/list", produces = "application/json;charset=utf-8")
-    public ResponseEntity<BatchVo> getList(
+    public ResponseEntity getList(
             @NotBlank @RequestParam @DateTimeFormat(pattern = Constant.DATETIME_FORMAT) Date startTime,
             @NotBlank @RequestParam(required = false) String seq,
             @NotBlank @RequestParam Integer limit

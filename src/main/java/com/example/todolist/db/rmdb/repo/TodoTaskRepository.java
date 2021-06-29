@@ -20,7 +20,7 @@ public class TodoTaskRepository {
     @Autowired
     private TodoTaskMapper todoTaskMapper;
 
-    public Long insert(String title, String content, String attachments, Integer weekOfYear, Date createdAt) {
+    public TodoTask insert(String title, String content, String attachments, Integer weekOfYear, Date createdAt) {
         TodoTask task = new TodoTask()
             .setTitle(title)
             .setContent(content)
@@ -29,7 +29,7 @@ public class TodoTaskRepository {
             .setCreatedAt(createdAt);
         todoTaskMapper.insert(task);
 
-        return task.getTid();
+        return task;
     }
 
     public TodoTask findOne(Long tid, Integer partitionKey) {

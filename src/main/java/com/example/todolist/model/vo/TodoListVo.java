@@ -21,7 +21,7 @@ public class TodoListVo extends BaseVo {
      */
     private Long lid;
 
-    private String todoTasks;
+    private JSONArray todoTasks;
 
     private Date firstCreatedAt;
 
@@ -49,6 +49,10 @@ public class TodoListVo extends BaseVo {
         setFirstMonth(todoList.getFirstMonth());
         setFirstWeekOfYear(todoList.getFirstWeekOfYear());
         setLastCreatedAt(todoList.getLastCreatedAt());
+    }
+
+    public void setTodoTasks(String todoTasksStr) {
+        this.todoTasks = JSONArray.parseArray(todoTasksStr);
     }
 
     public JSONObject toNext() {
@@ -84,11 +88,9 @@ public class TodoListVo extends BaseVo {
      * @return
      */
     public List<TodoTaskVo> toTaskVos() {
-        JSONArray attachList = JSONArray.parseArray(todoTasks);
-
         List<TodoTaskVo> taskVos = new ArrayList<>();
-        for (int i = attachList.size() - 1; i >= 0; i--) {
-            JSONObject taskJson = attachList.getJSONObject(i);
+        for (int i = todoTasks.size() - 1; i >= 0; i--) {
+            JSONObject taskJson = todoTasks.getJSONObject(i);
             TodoTaskVo taskVo = toTaskVo(taskJson);
             taskVos.add(0, taskVo);
         }

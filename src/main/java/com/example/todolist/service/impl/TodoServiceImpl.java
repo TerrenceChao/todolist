@@ -1,5 +1,7 @@
 package com.example.todolist.service.impl;
 
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.example.todolist.db.rmdb.entity.TodoTask;
 import com.example.todolist.db.rmdb.repo.TodoTaskRepository;
 import com.example.todolist.model.bo.TodoTaskBo;
@@ -10,9 +12,12 @@ import com.example.todolist.util.DatetimeUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.*;
 
 @Slf4j
@@ -30,19 +35,37 @@ public class TodoServiceImpl implements TodoService {
     private TodoTaskRepository taskRepo;
 
     @Override
-    public Long create(TodoTaskBo todoTaskBo) {
+    public TodoTaskVo create(String jsonStr, List<MultipartFile> files) throws IOException {
+        TodoTaskBo todoTaskBo = parseInput(jsonStr, files);
+        JSONObject attachments = todoTaskBo.getAttachments();
+
         Date now = new Date();
         Integer weekOfYear = dateUtil.getWeekOfYear(now);
-        Long tid = taskRepo.insert(
-                todoTaskBo.getTitle(),
-                todoTaskBo.getContent(),
-                todoTaskBo.getAttachments(),
-                weekOfYear,
-                now
-        );
-        log.info("create a task. tid: {}", tid);
 
-        return tid;
+        TodoTask newTask;
+        if (Objects.nonNull(attachments)) {
+            newTask = taskRepo.insert(
+                    todoTaskBo.getTitle(),
+                    todoTaskBo.getContent(),
+                    attachments.toJSONString(),
+                    weekOfYear,
+                    now
+            );
+            attachments.put("tid", newTask.getTid());
+            newTask.setAttachments(attachments.toJSONString());
+        } else {
+            newTask = taskRepo.insert(
+                    todoTaskBo.getTitle(),
+                    todoTaskBo.getContent(),
+                    null,
+                    weekOfYear,
+                    now
+            );
+        }
+
+        log.info("create a task. task: {}", newTask);
+
+        return new TodoTaskVo(newTask);
     }
 
     /**
@@ -135,7 +158,55 @@ public class TodoServiceImpl implements TodoService {
 
     }
 
-    private List<TodoTaskVo> toTodoTaskVos(List<TodoTask> tasks) {
+    protected TodoTaskBo parseInput(String jsonStr, List<MultipartFile> files) throws IOException {
+        TodoTaskBo taskBo = objectMapper.readValue(jsonStr, TodoTaskBo.class);
+        if (Objects.nonNull(files)) {
+            JSONObject attachments = toAttachments(files);
+            taskBo.setAttachments(attachments);
+        }
+
+        return taskBo;
+    }
+
+    protected JSONObject toAttachments(List<MultipartFile> files) throws IOException {
+        JSONObject attachments = new JSONObject();
+        JSONArray fileMeta = new JSONArray();
+
+        log.info("Composite attachments' JSON");
+        for (MultipartFile file : files) {
+            JSONObject attach = toAttach(file);
+            if (Objects.nonNull(attach)) {
+                fileMeta.add(attach);
+            }
+        }
+
+        if (fileMeta.isEmpty()) {
+            return null;
+        }
+
+        attachments.put("files", fileMeta);
+        log.info("Composite attachments' JSON. attachments: {}", attachments);
+
+        return attachments;
+    }
+
+    protected JSONObject toAttach(MultipartFile file) throws IOException {
+        if (file.getSize() == 0) {
+            return null;
+        }
+
+        JSONObject attach = new JSONObject();
+        String filename = file.getOriginalFilename();
+        String hashcode = DigestUtils.md5Hex(file.getBytes());
+
+        attach.put("name", filename);
+        attach.put("hash", hashcode);
+        attach.put("url", "-sz:" + file.getSize());
+
+        return attach;
+    }
+
+    protected List<TodoTaskVo> toTodoTaskVos(List<TodoTask> tasks) {
         List<TodoTaskVo> taskVos = new ArrayList<>();
         for (TodoTask task : tasks) {
             taskVos.add(new TodoTaskVo(task));

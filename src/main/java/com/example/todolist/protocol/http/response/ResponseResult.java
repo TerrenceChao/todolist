@@ -8,20 +8,20 @@ public class ResponseResult {
     private static final String DEFAULT_SUCCESS_MESSAGE = "SUCCESS";
     private static final String DEFAULT_FAILED_MESSAGE = "FAILED";
 
-    public static <T> ResponseEntity<T> success(T body, int rawStatus) {
-        return new ResponseEntity<T>(body, null, rawStatus);
+    public static ResponseEntity success(Object body, int rawStatus) {
+        return new ResponseEntity(success(body), null, rawStatus);
     }
 
-    public static <T> ResponseEntity<T> success(T body, HttpStatus status) {
-        return new ResponseEntity<T>(body, null, status);
+    public static ResponseEntity success(Object body, HttpStatus status) {
+        return new ResponseEntity(success(body), null, status);
     }
 
-    public static <T> ResponseEntity<T> successGet(T body) {
-        return new ResponseEntity<T>(body, null, HttpStatus.OK);
+    public static ResponseEntity successGet(Object body) {
+        return new ResponseEntity(success(body), null, HttpStatus.OK);
     }
 
-    public static <T> ResponseEntity<T> successPost(T body) {
-        return new ResponseEntity<T>(body, null, HttpStatus.CREATED);
+    public static ResponseEntity successPost(Object body) {
+        return new ResponseEntity(success(body), null, HttpStatus.CREATED);
     }
 
     public static Response success() {

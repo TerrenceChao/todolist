@@ -30,11 +30,14 @@ public class TodoTask {
 
     /**
      * JSON
-     * [
-     *      { name, hash, url },
-     *      { name, hash, url },
-     *      ...
-     * ]
+     * {
+     *      tid: xxxx,
+     *      files: [
+     *          { name, hash, url },
+     *          { name, hash, url },
+     *          ...
+     *      ]
+     * }
      */
     private String attachments;
 

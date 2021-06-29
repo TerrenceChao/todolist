@@ -21,13 +21,16 @@ public class TodoTaskVo extends BaseVo {
 
     /**
      * JSON
-     * [
-     *      { name, hash, url },
-     *      { name, hash, url },
-     *      ...
-     * ]
+     * {
+     *      tid: xxxx,
+     *      files: [
+     *          { name, hash, url },
+     *          { name, hash, url },
+     *          ...
+     *      ]
+     * }
      */
-    private String attachments;
+    private JSONObject attachments;
 
     /** partition key */
     private Integer weekOfYear;
@@ -48,6 +51,10 @@ public class TodoTaskVo extends BaseVo {
         setCreatedAt(task.getCreatedAt());
         setDeletedAt(task.getDeletedAt());
         setDone(task.getDone());
+    }
+
+    public void setAttachments(String attachmentsStr) {
+        this.attachments = JSONObject.parseObject(attachmentsStr);
     }
 
     public JSONObject toNext() {

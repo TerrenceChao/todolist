@@ -1,5 +1,8 @@
 package com.example.todolist.model.bo;
 
+import com.alibaba.fastjson.JSONObject;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -7,9 +10,8 @@ import javax.validation.constraints.NotBlank;
 
 @Data
 @Accessors(chain = true)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class TodoTaskBo {
-
-    private Long tid;
 
     @NotBlank
     private String title;
@@ -19,11 +21,14 @@ public class TodoTaskBo {
 
     /**
      * JSON
-     * [
-     *      { name, hash, file? },
-     *      { name, hash, file? },
-     *      ...
-     * ]
+     * {
+     *      files: [
+     *          { name, hash, url },
+     *          { name, hash, url },
+     *          ...
+     *      ]
+     * }
      */
-    private String attachments;
+    @JsonIgnore
+    private JSONObject attachments;
 }

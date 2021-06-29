@@ -1,12 +1,9 @@
 package com.example.todolist.service.impl;
 
-import com.alibaba.fastjson.JSONObject;
 import com.example.todolist.db.rmdb.entity.TodoTask;
 import com.example.todolist.db.rmdb.repo.TodoTaskRepository;
 import com.example.todolist.model.bo.TodoTaskBo;
 import com.example.todolist.model.vo.BatchVo;
-import com.example.todolist.model.vo.TodoSeqVo;
-import com.example.todolist.model.vo.TodoListVo;
 import com.example.todolist.model.vo.TodoTaskVo;
 import com.example.todolist.service.TodoService;
 import lombok.AllArgsConstructor;
@@ -29,13 +26,16 @@ public class TodoServiceImpl implements TodoService {
     public Long create(TodoTaskBo todoTaskBo) {
         Date now = new Date();
         Integer weekOfYear = 1; // get week of year
-        return taskRepo.insert(
+        Long tid = taskRepo.insert(
                 todoTaskBo.getTitle(),
                 todoTaskBo.getContent(),
                 todoTaskBo.getAttachments(),
                 weekOfYear,
                 now
         );
+        log.info("create a task. tid: {}", tid);
+
+        return tid;
     }
 
     /**
@@ -49,8 +49,10 @@ public class TodoServiceImpl implements TodoService {
 
         List<TodoTask> tasks;
         if (Objects.isNull(seq)) {
+            log.info("hot search by time.  limit: {} startTime: {}", limit, startTime);
             tasks = taskRepo.getList(startTime, limit + 1);
         } else {
+            log.info("hot search with time + seq.  limit: {} startTime: {} seq: {}", limit, startTime, seq);
             // 這裡和 HistoryListService.getList 的 seq 格式不統一
             Long tid = Long.valueOf(seq);
             tasks = taskRepo.getList(
@@ -60,6 +62,7 @@ public class TodoServiceImpl implements TodoService {
         }
 
         if (tasks.isEmpty()) {
+            log.info("hot search with empty returned.  limit: {} startTime: {} seq: {}", limit, startTime, seq);
             return new BatchVo(limit);
         }
 
@@ -92,6 +95,7 @@ public class TodoServiceImpl implements TodoService {
     @Override
     public TodoTaskVo getOne(Long tid, Integer partitionKey) {
         TodoTask task = taskRepo.findOne(tid, partitionKey);
+        log.info("get a task.  TodoTask: {}", task);
         return new TodoTaskVo(task);
     }
 

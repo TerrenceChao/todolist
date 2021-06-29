@@ -1,6 +1,5 @@
 package com.example.todolist.service.impl;
 
-import com.alibaba.fastjson.JSONObject;
 import com.example.todolist.db.rmdb.entity.TodoList;
 import com.example.todolist.db.rmdb.repo.TodoListRepository;
 import com.example.todolist.model.vo.BatchVo;
@@ -36,8 +35,10 @@ public class HistoryListServiceImpl implements HistoryListService {
 
         List<TodoList> todoListCollect;
         if (Objects.isNull(seq)) {
+            log.info("[history] search by time.  limit: {} startTime: {}", limit, startTime);
             todoListCollect = todoListRepo.getBatchTodoList(startTime, batch + 1);
         } else {
+            log.info("[history] search with time + seq.  limit: {} startTime: {} seq: {}", limit, startTime, seq);
             TodoSeqVo seqVo = TodoListVo.parseSeq(seq);
             todoListCollect = todoListRepo.getBatchTodoList(
                     startTime,
@@ -48,12 +49,13 @@ public class HistoryListServiceImpl implements HistoryListService {
         }
 
         if (todoListCollect.isEmpty()) {
+            log.info("[history] search with empty returned.  limit: {} startTime: {} seq: {}", limit, startTime, seq);
             return new BatchVo(limit);
         }
 
         List<TodoListVo> todoListVos = toTodoListVos(todoListCollect);
-        int lastOne = todoListVos.size() - 1;
-        TodoListVo lastVo = todoListVos.remove(lastOne);
+        int lastBatch = todoListVos.size() - 1;
+        TodoListVo lastVo = todoListVos.remove(lastBatch);
         List<TodoTaskVo> taskVos = mergeTasks(todoListVos);
 
         return new BatchVo(

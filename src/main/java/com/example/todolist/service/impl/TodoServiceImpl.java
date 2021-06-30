@@ -35,8 +35,8 @@ public class TodoServiceImpl implements TodoService {
     private TodoTaskRepository taskRepo;
 
     @Override
-    public TodoTaskVo create(String jsonStr, List<MultipartFile> files) throws IOException {
-        TodoTaskBo todoTaskBo = parseInput(jsonStr, files);
+    public TodoTaskVo create(String title, String content, List<MultipartFile> files) throws IOException {
+        TodoTaskBo todoTaskBo = parseInput(title, content, files);
         JSONObject attachments = todoTaskBo.getAttachments();
 
         Date now = new Date();
@@ -158,8 +158,11 @@ public class TodoServiceImpl implements TodoService {
 
     }
 
-    protected TodoTaskBo parseInput(String jsonStr, List<MultipartFile> files) throws IOException {
-        TodoTaskBo taskBo = objectMapper.readValue(jsonStr, TodoTaskBo.class);
+    protected TodoTaskBo parseInput(String title, String content, List<MultipartFile> files) throws IOException {
+        TodoTaskBo taskBo = new TodoTaskBo()
+                .setTitle(title)
+                .setContent(content);
+
         if (Objects.nonNull(files)) {
             JSONObject attachments = toAttachments(files);
             taskBo.setAttachments(attachments);

@@ -11,7 +11,7 @@ import java.util.List;
 
 public interface TodoService {
 
-    TodoTaskVo create(String jsonStr, List<MultipartFile> files) throws IOException;
+    TodoTaskVo create(String title, String content, List<MultipartFile> files) throws IOException;
 
     BatchVo getList(Date startTime, String seq, Integer batch);
 

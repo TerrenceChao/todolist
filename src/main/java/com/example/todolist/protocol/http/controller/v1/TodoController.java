@@ -33,7 +33,7 @@ public class TodoController {
     private HistoryListService historyListService;
 
     /**
-     * RequestBody and Multipart on Spring Boot
+     * RequestBody and Multipart on Spring Boot (json + attach file)
      * https://blogs.perficient.com/2020/07/27/requestbody-and-multipart-on-spring-boot/
      *
      * TODO How WebFlux works?
@@ -48,10 +48,10 @@ public class TodoController {
      *          2) write into todo_list; using RabbitMQ
      *          3) clear cache from ??? to latest cid if 1) is done.
      */
-    @PostMapping(value = "/task", consumes = { MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE })
-    public ResponseEntity create(@RequestPart("task") String taskJsonStr, @RequestPart("files") List<MultipartFile> files) throws IOException {
+    @PostMapping(value = "/task", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
+    public ResponseEntity create(@RequestPart("title") String title, @RequestPart("content") String content, @RequestPart("files") List<MultipartFile> files) throws IOException {
         // step 1
-        TodoTaskVo taskVo = todoService.create(taskJsonStr, files);
+        TodoTaskVo taskVo = todoService.create(title, content, files);
 
         // TODO  step 2  1).. 2).. 3)  >> async async async
         // historyListService. ...

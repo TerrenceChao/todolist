@@ -9,7 +9,6 @@ import com.example.todolist.model.vo.BatchVo;
 import com.example.todolist.model.vo.TodoTaskVo;
 import com.example.todolist.service.TodoService;
 import com.example.todolist.util.DatetimeUtil;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -27,9 +26,6 @@ public class TodoServiceImpl implements TodoService {
 
     @Autowired
     private DatetimeUtil dateUtil;
-
-    @Autowired
-    private ObjectMapper objectMapper;
 
     @Autowired
     private TodoTaskRepository taskRepo;

@@ -6,5 +6,7 @@ import java.util.Date;
 
 public interface HistoryListService {
 
-    BatchVo getList(Date startTime, String seq, Integer batch);
+    BatchVo transform(String seq, Integer limit);
+
+    BatchVo getList(Date startTime, String seq, Integer limit);
 }

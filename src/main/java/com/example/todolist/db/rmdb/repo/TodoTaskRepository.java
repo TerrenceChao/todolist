@@ -32,6 +32,13 @@ public class TodoTaskRepository {
         return task;
     }
 
+    public TodoTask findByTid(Long tid) {
+        QueryWrapper<TodoTask> wrapper = new QueryWrapper<TodoTask>()
+                .eq("tid", tid);
+
+        return todoTaskMapper.selectOne(wrapper);
+    }
+
     public TodoTask findOne(Long tid, Integer partitionKey) {
         QueryWrapper<TodoTask> wrapper = new QueryWrapper<TodoTask>()
             .eq("tid", tid)
@@ -66,6 +73,21 @@ public class TodoTaskRepository {
     public List<TodoTask> getList(Date startTime, Integer limit) {
         QueryWrapper<TodoTask> wrapper = new QueryWrapper<TodoTask>()
             .ge("created_at", new SimpleDateFormat(DATETIME_FORMAT).format(startTime))
+            .orderByAsc("tid")
+            .last(" limit " + limit);
+
+        return todoTaskMapper.selectList(wrapper);
+    }
+
+    /**
+     * TODO used in transform
+     * @param tid
+     * @param limit
+     * @return
+     */
+    public List<TodoTask> getList(Long tid, Integer limit) {
+        QueryWrapper<TodoTask> wrapper = new QueryWrapper<TodoTask>()
+            .ge("tid", tid)
             .orderByAsc("tid")
             .last(" limit " + limit);
 

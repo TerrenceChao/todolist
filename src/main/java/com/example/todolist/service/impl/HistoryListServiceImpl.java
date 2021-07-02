@@ -1,7 +1,9 @@
 package com.example.todolist.service.impl;
 
 import com.example.todolist.db.rmdb.entity.TodoList;
+import com.example.todolist.db.rmdb.entity.TodoTask;
 import com.example.todolist.db.rmdb.repo.TodoListRepository;
+import com.example.todolist.db.rmdb.repo.TodoTaskRepository;
 import com.example.todolist.model.vo.BatchVo;
 import com.example.todolist.model.vo.TodoSeqVo;
 import com.example.todolist.model.vo.TodoListVo;
@@ -22,6 +24,31 @@ public class HistoryListServiceImpl implements HistoryListService {
     @Autowired
     private TodoListRepository todoListRepo;
 
+    @Autowired
+    private TodoTaskRepository taskRepo;
+
+    /**
+     * @param seq
+     * @param limit TODO: 限制為 100 的倍數
+     * @return
+     */
+    @Override
+    public BatchVo transform(String seq, Integer limit) {
+
+        log.info("hot search with time + seq.  limit: {} seq: {}", limit, seq);
+        // 這裡和 HistoryListService.getList 的 seq 格式不統一
+        Long tid = Long.valueOf(seq);
+        List<TodoTask> tasks = taskRepo.getList(tid, limit + 1);
+        if (tasks.isEmpty()) {
+            log.info("hot search with empty returned.  limit: {} seq: {}", limit, seq);
+            return new BatchVo(limit);
+        }
+
+
+
+        return null;
+    }
+
     /**
      * @param startTime
      * @param seq
@@ -31,7 +58,7 @@ public class HistoryListServiceImpl implements HistoryListService {
     @Override
     public BatchVo getList(Date startTime, String seq, Integer limit) {
         // TODO batch 和 task size 不一樣, 這樣調整!?
-        int batch = limit / 10;
+        int batch = limit / 100;
 
         List<TodoList> todoListCollect;
         if (Objects.isNull(seq)) {

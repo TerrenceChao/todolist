@@ -68,13 +68,13 @@ public class TodoController {
      * @return
      */
     @GetMapping(value = "/task/{tid}", produces = "application/json;charset=utf-8")
-    public ResponseEntity getByTid(@PathVariable Long tid, @NotBlank @RequestParam Integer weekOfYear) {
+    public ResponseEntity getByTid(@PathVariable Long tid, @RequestParam(required = false) Integer weekOfYear) {
         return ResponseResult.successGet(todoService.getOne(tid, weekOfYear));
     }
 
     /**
      * TODO 讀取近期的 list 從 todoService (TodoTask)
-     *  讀取歷史的 list 從 historyListService (1筆 TodoList 包含 10 筆 TodoTask)
+     *  讀取歷史的 list 從 historyListService (1筆 TodoList 包含 100 筆 TodoTask)
      * @param startTime
      * @param seq (not required) if null, get the min seq of the time 
      * @param limit

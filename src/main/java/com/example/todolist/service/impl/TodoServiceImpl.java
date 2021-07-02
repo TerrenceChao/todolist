@@ -120,8 +120,14 @@ public class TodoServiceImpl implements TodoService {
      */
     @Override
     public TodoTaskVo getOne(Long tid, Integer partitionKey) {
-        log.info("get a task.  tid: {}  weekOfYear: {}", tid, partitionKey);
-        TodoTask task = taskRepo.findOne(tid, partitionKey);
+        TodoTask task;
+        if (Objects.isNull(partitionKey)) {
+            log.info("get a task.  tid: {}", tid);
+            task = taskRepo.findByTid(tid);
+        } else {
+            log.info("get a task with 'partition key'.  tid: {}  weekOfYear: {}", tid, partitionKey);
+            task = taskRepo.findOne(tid, partitionKey);
+        }
 //        TODO def exception
 //        if (Objects.isNull(task)) {
 //            throw new Exception("");

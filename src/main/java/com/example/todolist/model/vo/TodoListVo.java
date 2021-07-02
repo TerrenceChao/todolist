@@ -17,7 +17,7 @@ import java.util.List;
 public class TodoListVo extends BaseVo {
 
     /**
-     * 10 筆 todo_task 的第一筆 tid
+     * 100 筆 todo_task 的第一筆 tid
      */
     private Long lid;
 
@@ -38,7 +38,7 @@ public class TodoListVo extends BaseVo {
     private Integer firstWeekOfYear;
 
     /**
-     * 10 筆 todo_task 的最後一筆 created_at
+     * 100 筆 todo_task 的最後一筆 created_at
      */
     private Date lastCreatedAt;
 

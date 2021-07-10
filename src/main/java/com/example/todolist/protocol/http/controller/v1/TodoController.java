@@ -6,6 +6,7 @@ import com.example.todolist.model.vo.BatchVo;
 import com.example.todolist.model.vo.TodoTaskVo;
 import com.example.todolist.protocol.http.response.ResponseResult;
 import com.example.todolist.service.HistoryListService;
+import com.example.todolist.service.StorageService;
 import com.example.todolist.service.TodoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -30,6 +31,9 @@ public class TodoController {
     private TodoService todoService;
 
     @Autowired
+    private StorageService storageService;
+
+    @Autowired
     private HistoryListService historyListService;
 
     /**
@@ -42,7 +46,8 @@ public class TodoController {
      *  不到 "K" 筆在 redis 需要記錄 idx 1 ~ idx K (最新的 < "K" 筆)  >>> !?!??!?
      *
      * 1. create one in DB
-     * 2. if the amount of latest tasks in cache(redis) < "K" ?  >>> !?!??!?
+     * 2. send attachments (async)
+     * 3. if the amount of latest tasks in cache(redis) < "K" ?  >>> !?!??!?
      *      Y: read one from DB and write cache (有辦法透過 snowflake 拿到 cid ?? Y)
      *      N:  1) mark/label for these "K" tasks.
      *          2) write into todo_list; using RabbitMQ
@@ -52,6 +57,9 @@ public class TodoController {
     public ResponseEntity create(@RequestPart("title") String title, @RequestPart("content") String content, @RequestPart("files") List<MultipartFile> files) throws IOException {
         // step 1
         TodoTaskVo taskVo = todoService.create(title, content, files);
+
+        // step 2
+        storageService.uploadAttach(taskVo.getTid(), taskVo.getAttachments(), files);
 
         // TODO  step 2  1).. 2).. 3)  >> async async async
         // historyListService. ...

@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -132,6 +133,12 @@ public class TodoServiceImpl implements TodoService {
 //        }
 
         return new TodoTaskVo(tid, task);
+    }
+
+    @Override
+    @Transactional
+    public void updateAttach(Long tid, Integer partitionKey, String filename, String url) {
+        // TODO update todo_task.attachments
     }
 
     /**

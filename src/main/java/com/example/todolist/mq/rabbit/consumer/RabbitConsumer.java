@@ -14,7 +14,6 @@ import org.springframework.stereotype.Component;
  * https://blog.csdn.net/qq_38082304/article/details/103049696
  */
 @Slf4j
-@Component
 public class RabbitConsumer {
 
     @Autowired
@@ -34,7 +33,7 @@ public class RabbitConsumer {
             System.out.println(label + " Received payload: " + payload);
 
         } catch (Exception e) {
-            log.error("", e);
+            log.error("worker queue ", e);
         } finally {
             //always ack
             channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
@@ -42,7 +41,7 @@ public class RabbitConsumer {
     }
 
     /**
-     * worker queue
+     * worker queue A
      * @param message
      * @param channel
      * @throws Exception
@@ -53,7 +52,7 @@ public class RabbitConsumer {
     }
 
     /**
-     * worker queue
+     * worker queue B
      * @param message
      * @param channel
      * @throws Exception

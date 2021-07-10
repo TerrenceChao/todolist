@@ -22,6 +22,8 @@ public interface TodoService {
      */
     TodoTaskVo getOne(Long tid, Integer partitionKey);
 
+    void updateAttach(Long tid, Integer partitionKey, String filename, String url);
+
     /**
      * 暫時不實現
      * TODO 附件暫時不允許更新

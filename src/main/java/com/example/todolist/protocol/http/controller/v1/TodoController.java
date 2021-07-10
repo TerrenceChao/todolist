@@ -1,12 +1,10 @@
 package com.example.todolist.protocol.http.controller.v1;
 
 import com.example.todolist.common.Constant;
-import com.example.todolist.model.bo.TodoTaskBo;
-import com.example.todolist.model.vo.BatchVo;
 import com.example.todolist.model.vo.TodoTaskVo;
 import com.example.todolist.protocol.http.response.ResponseResult;
 import com.example.todolist.service.HistoryListService;
-import com.example.todolist.service.StorageService;
+import com.example.todolist.service.AttachService;
 import com.example.todolist.service.TodoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -21,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import java.io.IOException;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 @RestController
 @RequiredArgsConstructor
@@ -31,7 +30,7 @@ public class TodoController {
     private TodoService todoService;
 
     @Autowired
-    private StorageService storageService;
+    private AttachService attachService;
 
     @Autowired
     private HistoryListService historyListService;
@@ -58,8 +57,10 @@ public class TodoController {
         // step 1
         TodoTaskVo taskVo = todoService.create(title, content, files);
 
-        // step 2
-        storageService.uploadAttach(taskVo.getTid(), taskVo.getAttachments(), files);
+        // TODO step 2 >> async
+        if (Objects.nonNull(files) && ! files.isEmpty()) {
+            attachService.uploadAttach(taskVo.getTid(), taskVo.getWeekOfYear(), taskVo.getAttachments(), files);
+        }
 
         // TODO  step 2  1).. 2).. 3)  >> async async async
         // historyListService. ...

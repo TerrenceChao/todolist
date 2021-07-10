@@ -5,7 +5,7 @@ import lombok.experimental.Accessors;
 
 @Data
 @Accessors(chain = true)
-public class TodoSeqVo {
+public class TodoSeqVo extends BaseVo {
 
     private Integer month;
 

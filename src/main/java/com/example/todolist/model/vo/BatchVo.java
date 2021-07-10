@@ -10,7 +10,7 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @Accessors(chain = true)
-public class BatchVo<T> {
+public class BatchVo<T> extends BaseVo {
 
     private List<T> list;
 

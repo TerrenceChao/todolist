@@ -11,7 +11,7 @@ import javax.validation.constraints.NotBlank;
 @Data
 @Accessors(chain = true)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class TodoTaskBo {
+public class TodoTaskBo extends BaseBo {
 
     @NotBlank
     private String title;

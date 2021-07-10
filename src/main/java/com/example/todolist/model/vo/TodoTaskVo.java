@@ -53,6 +53,17 @@ public class TodoTaskVo extends BaseVo {
         setDone(task.getDone());
     }
 
+    public TodoTaskVo(Long tid, TodoTask task) {
+        setTid(tid);
+        setTitle(task.getTitle());
+        setContent(task.getContent());
+        setAttachments(task.getAttachments());
+        setWeekOfYear(task.getWeekOfYear());
+        setCreatedAt(task.getCreatedAt());
+        setDeletedAt(task.getDeletedAt());
+        setDone(task.getDone());
+    }
+
     public void setAttachments(String attachmentsStr) {
         this.attachments = JSONObject.parseObject(attachmentsStr);
     }

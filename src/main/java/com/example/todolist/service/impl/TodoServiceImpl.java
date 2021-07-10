@@ -47,8 +47,6 @@ public class TodoServiceImpl implements TodoService {
                     weekOfYear,
                     now
             );
-            attachments.put("tid", newTask.getTid());
-            newTask.setAttachments(attachments.toJSONString());
         } else {
             newTask = taskRepo.insert(
                     todoTaskBo.getTitle(),
@@ -133,7 +131,7 @@ public class TodoServiceImpl implements TodoService {
 //            throw new Exception("");
 //        }
 
-        return new TodoTaskVo(task);
+        return new TodoTaskVo(tid, task);
     }
 
     /**
@@ -165,7 +163,7 @@ public class TodoServiceImpl implements TodoService {
                 .setTitle(title)
                 .setContent(content);
 
-        if (Objects.nonNull(files)) {
+        if (Objects.nonNull(files) && ! files.isEmpty()) {
             JSONObject attachments = toAttachments(files);
             taskBo.setAttachments(attachments);
         }
@@ -175,21 +173,15 @@ public class TodoServiceImpl implements TodoService {
 
     protected JSONObject toAttachments(List<MultipartFile> files) throws IOException {
         JSONObject attachments = new JSONObject();
-        JSONArray fileMeta = new JSONArray();
 
         log.info("Composite attachments' JSON");
         for (MultipartFile file : files) {
             JSONObject attach = toAttach(file);
             if (Objects.nonNull(attach)) {
-                fileMeta.add(attach);
+                attachments.put(file.getOriginalFilename(), attach);
             }
         }
 
-        if (fileMeta.isEmpty()) {
-            return null;
-        }
-
-        attachments.put("files", fileMeta);
         log.info("Composite attachments' JSON. attachments: {}", attachments);
 
         return attachments;
@@ -201,12 +193,11 @@ public class TodoServiceImpl implements TodoService {
         }
 
         JSONObject attach = new JSONObject();
-        String filename = file.getOriginalFilename();
         String hashcode = DigestUtils.md5Hex(file.getBytes());
 
-        attach.put("name", filename);
         attach.put("hash", hashcode);
-        attach.put("url", "-sz:" + file.getSize());
+        attach.put("size", file.getSize() + "B");
+        attach.put("url", false);
 
         return attach;
     }

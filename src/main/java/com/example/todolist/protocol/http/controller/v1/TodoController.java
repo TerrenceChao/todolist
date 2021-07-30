@@ -41,7 +41,7 @@ public class TodoController {
     @PostMapping(value = "/task", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
     public ResponseEntity create(@RequestPart("title") String title, @RequestPart("content") String content, @RequestPart("files") List<MultipartFile> files) throws IOException {
         TodoTaskVo taskVo = todoService.create(title, content, files);
-        // historyListService. ...
+        // async, threadlocal > historyListService. ...
 
         return ResponseResult.successPost(taskVo.getTid());
     }

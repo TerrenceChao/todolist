@@ -9,6 +9,7 @@ import javax.validation.constraints.NotBlank;
 @Accessors(chain = true)
 public class TransformBo extends BaseBo {
 
+    /** todo_task: tid */
     @NotBlank
     private String seq;
 

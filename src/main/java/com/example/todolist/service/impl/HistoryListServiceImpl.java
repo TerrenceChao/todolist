@@ -28,7 +28,7 @@ public class HistoryListServiceImpl implements HistoryListService {
     private TodoTaskRepository taskRepo;
 
     /**
-     * @param seq
+     * @param seq todo_task: tid
      * @param limit TODO: 限制為 100 的倍數
      * @return
      */
@@ -44,7 +44,7 @@ public class HistoryListServiceImpl implements HistoryListService {
             return new BatchVo(limit);
         }
 
-
+        //
 
         return null;
     }

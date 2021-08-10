@@ -38,7 +38,7 @@ public class TodoController {
      * @return
      * @throws IOException
      */
-    @PostMapping(value = "/task", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
+    @PostMapping(value = "/tasks", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
     public ResponseEntity create(@RequestPart("title") String title, @RequestPart("content") String content, @RequestPart("files") List<MultipartFile> files) throws IOException {
         TodoTaskVo taskVo = todoService.create(title, content, files);
         // async, threadlocal > historyListService. ...
@@ -52,7 +52,7 @@ public class TodoController {
      * @param weekOfYear
      * @return
      */
-    @GetMapping(value = "/task/{tid}", produces = "application/json;charset=utf-8")
+    @GetMapping(value = "/tasks/{tid}", produces = "application/json;charset=utf-8")
     public ResponseEntity getByTid(@PathVariable Long tid, @RequestParam(required = false) Integer weekOfYear) {
         return ResponseResult.successGet(todoService.getOne(tid, weekOfYear));
     }
@@ -63,7 +63,7 @@ public class TodoController {
      * @param limit
      * @return
      */
-    @GetMapping(value = "/list", produces = "application/json;charset=utf-8")
+    @GetMapping(value = "/tasks", produces = "application/json;charset=utf-8")
     public ResponseEntity getList(
             @NotBlank @RequestParam @DateTimeFormat(pattern = Constant.DATETIME_FORMAT) Date startTime,
             @NotBlank @RequestParam(required = false) String seq,

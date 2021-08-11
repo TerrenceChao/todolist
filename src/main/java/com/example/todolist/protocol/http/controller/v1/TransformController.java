@@ -10,9 +10,9 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-@RestController
 @RequiredArgsConstructor
 @RequestMapping("/v1/transform")
+@RestController("v1TransformController")
 public class TransformController {
 
     @Autowired

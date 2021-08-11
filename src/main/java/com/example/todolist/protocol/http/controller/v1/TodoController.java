@@ -19,9 +19,9 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 
-@RestController
 @RequiredArgsConstructor
 @RequestMapping("/v1/todo")
+@RestController("v1TodoController")
 public class TodoController {
 
     @Autowired

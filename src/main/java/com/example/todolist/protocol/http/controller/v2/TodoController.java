@@ -9,6 +9,7 @@ import com.example.todolist.service.HistoryListService;
 import com.example.todolist.service.TodoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -21,9 +22,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
-@RestController
 @RequiredArgsConstructor
 @RequestMapping("/v2/todo")
+@RestController("v2TodoController")
 public class TodoController {
 
     @Autowired

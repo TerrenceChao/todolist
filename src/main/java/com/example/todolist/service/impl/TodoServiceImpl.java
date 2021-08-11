@@ -65,29 +65,27 @@ public class TodoServiceImpl implements TodoService {
 
     /**
      * @param startTime
-     * @param seq tid
+     * @param tid tid
      * @param limit
      * @return
      */
     @Override
-    public BatchVo getList(Date startTime, String seq, Integer limit) {
+    public BatchVo getList(Date startTime, String tid, Integer limit) {
 
         List<TodoTask> tasks;
-        if (Objects.isNull(seq)) {
+        if (Objects.isNull(tid)) {
             log.info("hot search by time.  limit: {} startTime: {}", limit, startTime);
             tasks = taskRepo.getList(startTime, limit + 1);
         } else {
-            log.info("hot search with time + seq.  limit: {} startTime: {} seq: {}", limit, startTime, seq);
-            // 這裡和 HistoryListService.getList 的 seq 格式不統一
-            Long tid = Long.valueOf(seq);
+            log.info("hot search with time + tid.  limit: {} startTime: {} tid: {}", limit, startTime, tid);
             tasks = taskRepo.getList(
                     startTime,
-                    tid,
+                    Long.valueOf(tid),
                     limit + 1);
         }
 
         if (tasks.isEmpty()) {
-            log.info("hot search with empty returned.  limit: {} startTime: {} seq: {}", limit, startTime, seq);
+            log.info("hot search with empty returned.  limit: {} startTime: {} tid: {}", limit, startTime, tid);
             return new BatchVo(limit);
         }
 

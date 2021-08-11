@@ -19,9 +19,12 @@ public class TodoListRepository {
     @Autowired
     private TodoListMapper todoListMapper;
 
-    public List<TodoList> getBatchTodoList(Date startTime, Integer limit) {
+    public List<TodoList> getBatchTodoList(Date startTime, Integer month, Integer weekOfYear, Integer limit) {
         QueryWrapper<TodoList> wrapper = new QueryWrapper<TodoList>()
-                .ge("created_at", new SimpleDateFormat(DATETIME_FORMAT).format(startTime))
+                .ge("created_at", new SimpleDateFormat(DATETIME_FORMAT).format(startTime)) // >=
+                .eq("first_month", month) // equal
+                .eq("first_week_of_year", weekOfYear) // equal
+                .orderByAsc("lid")
                 .last(" limit " + limit);
 
         return todoListMapper.selectList(wrapper);
@@ -29,10 +32,11 @@ public class TodoListRepository {
 
     public List<TodoList> getBatchTodoList(Date startTime, Integer month, Integer weekOfYear, Long lid, Integer limit) {
         QueryWrapper<TodoList> wrapper = new QueryWrapper<TodoList>()
+                .ge("created_at", new SimpleDateFormat(DATETIME_FORMAT).format(startTime)) // >=
                 .eq("first_month", month) // equal
                 .eq("first_week_of_year", weekOfYear) // equal
                 .ge("lid", lid) // >=
-                .ge("created_at", new SimpleDateFormat(DATETIME_FORMAT).format(startTime)) // >=
+                .orderByAsc("lid")
                 .last(" limit " + limit);
 
         return todoListMapper.selectList(wrapper);

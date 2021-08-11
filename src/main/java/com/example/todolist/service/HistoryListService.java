@@ -8,11 +8,11 @@ public interface HistoryListService {
 
     /**
      *
-     * @param seq todo_task: tid
+     * @param tid todo_task: tid
      * @param limit
      * @return
      */
-    BatchVo transform(String seq, Integer limit);
+    BatchVo transform(String tid, Integer limit);
 
-    BatchVo getList(Date startTime, String seq, Integer limit);
+    BatchVo getList(Date startTime, String tid, Integer limit);
 }

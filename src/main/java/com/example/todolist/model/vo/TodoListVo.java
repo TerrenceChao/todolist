@@ -57,15 +57,15 @@ public class TodoListVo extends BaseVo {
 
     public JSONObject toNext() {
         JSONObject json = new JSONObject();
-        // seq: 庫 + 表 + lid
-        json.put("seq", firstMonth + "-" + firstWeekOfYear + "-" + lid);
+        // seq: lid
+        json.put("seq", lid);
         json.put("createdAt", firstCreatedAt);
 
         return json;
     }
 
     /**
-     *
+     * TODO Deprecated
      * @param seq
      * @return
      */

@@ -5,10 +5,10 @@ import com.example.todolist.db.rmdb.entity.TodoTask;
 import com.example.todolist.db.rmdb.repo.TodoListRepository;
 import com.example.todolist.db.rmdb.repo.TodoTaskRepository;
 import com.example.todolist.model.vo.BatchVo;
-import com.example.todolist.model.vo.TodoSeqVo;
 import com.example.todolist.model.vo.TodoListVo;
 import com.example.todolist.model.vo.TodoTaskVo;
 import com.example.todolist.service.HistoryListService;
+import com.example.todolist.util.DatetimeUtil;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,20 +27,21 @@ public class HistoryListServiceImpl implements HistoryListService {
     @Autowired
     private TodoTaskRepository taskRepo;
 
+    @Autowired
+    private DatetimeUtil dateUtil;
+
     /**
-     * @param seq todo_task: tid
+     * @param tid todo_task: tid
      * @param limit TODO: 限制為 100 的倍數
      * @return
      */
     @Override
-    public BatchVo transform(String seq, Integer limit) {
+    public BatchVo transform(String tid, Integer limit) {
 
-        log.info("hot search with time + seq.  limit: {} seq: {}", limit, seq);
-        // 這裡和 HistoryListService.getList 的 seq 格式不統一
-        Long tid = Long.valueOf(seq);
-        List<TodoTask> tasks = taskRepo.getList(tid, limit + 1);
+        log.info("hot search with tid.  limit: {} tid: {}", limit, tid);
+        List<TodoTask> tasks = taskRepo.getList(Long.valueOf(tid), limit + 1);
         if (tasks.isEmpty()) {
-            log.info("hot search with empty returned.  limit: {} seq: {}", limit, seq);
+            log.info("hot search with empty returned.  limit: {} tid: {}", limit, tid);
             return new BatchVo(limit);
         }
 
@@ -51,32 +52,35 @@ public class HistoryListServiceImpl implements HistoryListService {
 
     /**
      * @param startTime
-     * @param seq
+     * @param tid
      * @param limit
      * @return
      */
     @Override
-    public BatchVo getList(Date startTime, String seq, Integer limit) {
+    public BatchVo getList(Date startTime, String tid, Integer limit) {
         // TODO batch 和 task size 不一樣, 這樣調整!?
         int batch = limit / 100;
+        Integer month = dateUtil.getMonth(startTime);
+        Integer weekOfYear = dateUtil.getWeekOfYear(startTime);
 
         List<TodoList> todoListCollect;
-        if (Objects.isNull(seq)) {
+        if (Objects.isNull(tid)) {
             log.info("[history] search by time.  limit: {} startTime: {}", limit, startTime);
-            todoListCollect = todoListRepo.getBatchTodoList(startTime, batch + 1);
+            todoListCollect = todoListRepo.getBatchTodoList(startTime, month, weekOfYear, batch + 1);
         } else {
-            log.info("[history] search with time + seq.  limit: {} startTime: {} seq: {}", limit, startTime, seq);
-            TodoSeqVo seqVo = TodoListVo.parseSeq(seq);
+            log.info("[history] search with time + tid.  limit: {} startTime: {} tid: {}", limit, startTime, tid);
+
             todoListCollect = todoListRepo.getBatchTodoList(
                     startTime,
-                    seqVo.getMonth(),
-                    seqVo.getWeekOfYear(),
-                    seqVo.getLid(),
-                    batch + 1);
+                    month,
+                    weekOfYear,
+                    Long.valueOf(tid),
+                    batch + 1
+            );
         }
 
         if (todoListCollect.isEmpty()) {
-            log.info("[history] search with empty returned.  limit: {} startTime: {} seq: {}", limit, startTime, seq);
+            log.info("[history] search with empty returned.  limit: {} startTime: {} tid: {}", limit, startTime, tid);
             return new BatchVo(limit);
         }
 

@@ -17,6 +17,12 @@ public class DatetimeUtil {
         return Integer.valueOf(weekOfYear);
     }
 
+    public Integer getMonth(Date date) {
+        SimpleDateFormat sdf = new SimpleDateFormat(Constant.MONTH);
+        String month = sdf.format(date);
+        return Integer.valueOf(month);
+    }
+
 
     /**
      * simple test...
@@ -25,5 +31,6 @@ public class DatetimeUtil {
     public static void main(String[] args) {
         DatetimeUtil datetimeUtil = new DatetimeUtil();
         System.out.println(datetimeUtil.getWeekOfYear(new Date()));
+        System.out.println(datetimeUtil.getMonth(new Date()));
     }
 }

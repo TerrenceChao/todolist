@@ -13,7 +13,7 @@ public interface TodoService {
 
     TodoTaskVo create(String title, String content, List<MultipartFile> files) throws IOException;
 
-    BatchVo getList(Date startTime, String seq, Integer batch);
+    BatchVo getList(Date startTime, String tid, Integer batch);
 
     /**
      * @param tid PK

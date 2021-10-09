@@ -1,22 +1,28 @@
 package com.example.todolist.service;
 
 import com.example.todolist.db.rmdb.entity.TodoTask;
-import com.example.todolist.model.BatchVo;
+import com.example.todolist.model.vo.BatchVo;
+import com.example.todolist.model.vo.TodoTaskVo;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.Date;
+import java.util.List;
 
 public interface TodoService {
 
-    void create(TodoTask todoTask);
+    TodoTaskVo create(String title, String content, List<MultipartFile> files) throws IOException;
 
-    BatchVo getList(Date startTime, Integer limit);
+    BatchVo getList(Date startTime, String tid, Integer batch);
 
     /**
      * @param tid PK
      * @param partitionKey weekOfYear
      * @return
      */
-    Object getOne(Long tid, Integer partitionKey);
+    TodoTaskVo getOne(Long tid, Integer partitionKey);
+
+    void updateAttach(Long tid, Integer partitionKey, String filename, String url);
 
     /**
      * 暫時不實現

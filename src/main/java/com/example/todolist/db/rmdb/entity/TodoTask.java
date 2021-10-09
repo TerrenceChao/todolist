@@ -1,5 +1,6 @@
 package com.example.todolist.db.rmdb.entity;
 
+import com.alibaba.fastjson.JSONArray;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
@@ -27,7 +28,17 @@ public class TodoTask {
 
     private String content;
 
-    /** JSON */
+    /**
+     * JSON
+     * {
+     *      tid: xxxx,
+     *      files: [
+     *          { name, hash, url },
+     *          { name, hash, url },
+     *          ...
+     *      ]
+     * }
+     */
     private String attachments;
 
     /** partition key */
@@ -35,6 +46,7 @@ public class TodoTask {
 
     private Date createdAt;
 
+    /** soft delete */
     private Date deletedAt;
 
     private Date done;

@@ -69,7 +69,7 @@ class TodolistApplicationTests {
     void findOneTodoTaskDb() {
         QueryWrapper<TodoTask> wrapper = new QueryWrapper<>();
         wrapper.eq("tid", 1425320289865691138L);
-        wrapper.eq("week_of_year", 930); // partition_key
+        wrapper.eq("week_of_year", 30); // partition_key
         TodoTask task = todoTaskMapper.selectOne(wrapper);
         log.info("就一筆清單! {}", task);
     }

@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 public class StorageConsumer {
 
     @Autowired
-    public ObjectMapper objectMapper;
+    private ObjectMapper objectMapper;
 
 //    @RabbitListener(
 //            queues = "${mq.basic.queue}",

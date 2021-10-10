@@ -1,20 +1,18 @@
 package com.example.todolist.mq.rabbit.consumer;
 
-import com.alibaba.fastjson.JSONObject;
 import com.rabbitmq.client.Channel;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageProperties;
 import org.springframework.messaging.handler.annotation.Payload;
 
-import java.io.IOException;
 
 @Slf4j
 public abstract class BaseConsumer<Msg> {
 
-    protected abstract Msg transformMsg(byte[] msgBody) throws IOException;
+    protected abstract Msg transformMsg(byte[] msgBody) throws Exception;
 
-    protected abstract void businessProcess(Msg msg);
+    protected abstract void businessProcess(Msg msg) throws Exception;
 
     protected void consumeMessage(@Payload Message message, Channel channel) throws Exception {
 
@@ -25,13 +23,14 @@ public abstract class BaseConsumer<Msg> {
 
         try {
             Msg msg = transformMsg(message.getBody());
-//            log.info("上傳附件-人為手動確認消費-監聽器監聽消費消息-內容為：{} ", msg);
+            log.info("上傳附件-人為手動確認消費-監聽器監聽消費消息-內容為：{} ", msg);
 
-            // TODO business logic
+            // do business process
             businessProcess(msg);
 
             //第一个参数为：消息的分发标识(唯一);第二个参数：是否允许批量确认消费(在这里设置为true)
             channel.basicAck(deliveryTag, true);
+
         } catch (Exception e) {
             log.error("上傳附件-人為手動確認消費-監聽器監聽消費消息-發生異常：", e.fillInStackTrace());
 

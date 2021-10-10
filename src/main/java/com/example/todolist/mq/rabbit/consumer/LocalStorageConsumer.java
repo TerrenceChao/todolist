@@ -23,35 +23,30 @@ import java.nio.file.Paths;
 public class LocalStorageConsumer extends BaseConsumer<JSONObject> {
 
     @Autowired
-    public ObjectMapper objectMapper;
+    private ObjectMapper objectMapper;
 
     @Override
-    public JSONObject transformMsg(byte[] msgBody) throws IOException {
+    public JSONObject transformMsg(byte[] msgBody) throws Exception {
         return objectMapper.readValue(msgBody, JSONObject.class);
     }
 
     @Override
-    public void businessProcess(JSONObject payload) {
+    public void businessProcess(JSONObject payload) throws Exception {
         log.info("\n本地儲存邏輯 \ntid: {}, \nfilename: {}, \nhash: {}\n", payload.getString("tid"), payload.getString("filename"), payload.getString("hash"));
 
-        try {
-            String filename = payload.getString("filename");
-            String fileOutput = "/Users/albert/Desktop/todo-images/" + filename;
-            Path path = Paths.get(fileOutput);
+        String filename = payload.getString("filename");
+        String fileOutput = "/Users/albert/Desktop/todo-images/" + filename;
+        Path path = Paths.get(fileOutput);
 
-            byte[] bytes = payload.getBytes("bytes");
-            Files.write(path, bytes);
-
-        } catch (IOException e) {
-            log.error("無法在本地端儲存圖片", e.getMessage());
-        }
+        byte[] bytes = payload.getBytes("bytes");
+        Files.write(path, bytes);
     }
 
-    @Async
-    @RabbitListener(
-            queues = "${mq.basic.queue}",
-            containerFactory = "singleListenerContainer"
-    )
+//    @Async
+//    @RabbitListener(
+//            queues = "${mq.basic.queue}",
+//            containerFactory = "singleListenerContainer"
+//    )
     public void uploadAttach(@Payload Message message, Channel channel) throws Exception {
         consumeMessage(message, channel);
     }

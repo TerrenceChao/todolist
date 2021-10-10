@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
  * https://blog.csdn.net/qq_38082304/article/details/103049696
  */
 @Slf4j
-public class RabbitConsumer {
+public class BaseConsumer {
 
     @Autowired
     protected ObjectMapper objectMapper;

@@ -12,10 +12,10 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+
 
 @Slf4j
 @Component
@@ -32,14 +32,19 @@ public class LocalStorageConsumer extends BaseConsumer<JSONObject> {
 
     @Override
     public void businessProcess(JSONObject payload) throws Exception {
-        log.info("\n本地儲存邏輯 \ntid: {}, \nfilename: {}, \nhash: {}\n", payload.getString("tid"), payload.getString("filename"), payload.getString("hash"));
+        try {
+            log.info("\n本地儲存檔案 \ntid: {}, \nfilename: {}, \nhash: {}\n", payload.getString("tid"), payload.getString("filename"), payload.getString("hash"));
 
-        String filename = payload.getString("filename");
-        String fileOutput = "/Users/albert/Desktop/todo-images/" + filename;
-        Path path = Paths.get(fileOutput);
+            String filename = payload.getString("filename");
+            String fileOutput = "/Users/albert/Desktop/todo-images/" + filename;
+            Path path = Paths.get(fileOutput);
 
-        byte[] bytes = payload.getBytes("bytes");
-        Files.write(path, bytes);
+            byte[] bytes = payload.getBytes("bytes");
+            Files.write(path, bytes);
+        } catch (Exception e) {
+            log.error("本地儲存檔案-人為手動確認消費-監聽器監聽消費消息-發生異常：", e.fillInStackTrace());
+            throw e;
+        }
     }
 
 //    @Async

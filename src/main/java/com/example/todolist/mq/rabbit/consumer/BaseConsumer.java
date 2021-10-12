@@ -19,11 +19,10 @@ public abstract class BaseConsumer<Msg> {
         MessageProperties messageProperties = message.getMessageProperties();
         // 獲取消息分發時的全局唯一標示
         long deliveryTag = messageProperties.getDeliveryTag();
-        log.info("上傳附件-deliveryTag: {}", deliveryTag);
+        log.info("rabbitmq delivery tag: {}", deliveryTag);
 
         try {
             Msg msg = transformMsg(message.getBody());
-            // log.info("上傳附件-人為手動確認消費-監聽器監聽消費消息-內容為：{} ", msg);
 
             // do business process
             businessProcess(msg);
@@ -32,8 +31,6 @@ public abstract class BaseConsumer<Msg> {
             channel.basicAck(deliveryTag, true);
 
         } catch (Exception e) {
-            log.error("上傳附件-人為手動確認消費-監聽器監聽消費消息-發生異常：", e.fillInStackTrace());
-
             //如果在处理消息的过程中发生了异常,则照样需要人为手动确认消费掉该消息
             // (否则该消息将一直留在队列中,从而将导致消息的重复消费)
             channel.basicReject(deliveryTag, false);

@@ -22,15 +22,4 @@ public class DatetimeUtil {
         String month = sdf.format(date);
         return Integer.valueOf(month);
     }
-
-
-    /**
-     * simple test...
-     * @param args
-     */
-    public static void main(String[] args) {
-        DatetimeUtil datetimeUtil = new DatetimeUtil();
-        System.out.println(datetimeUtil.getWeekOfYear(new Date()));
-        System.out.println(datetimeUtil.getMonth(new Date()));
-    }
 }

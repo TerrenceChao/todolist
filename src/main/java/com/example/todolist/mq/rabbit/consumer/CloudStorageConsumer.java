@@ -16,7 +16,6 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Component;
 
-import java.util.Date;
 import java.util.Objects;
 
 
@@ -50,22 +49,27 @@ public class CloudStorageConsumer extends BaseConsumer<JSONObject> {
 
     @Override
     public void businessProcess(JSONObject payload) throws Exception {
-        log.info("Google Cloud Storage 邏輯 \ntid: {}, \nfilename: {}, \nhash: {}", payload.getString("tid"), payload.getString("filename"), payload.getString("hash"));
+        try {
+            log.info("Uploading Google Cloud Storage \ntid: {}, \nfilename: {}, \nhash: {}", payload.getString("tid"), payload.getString("filename"), payload.getString("hash"));
 
-        String hashcode = payload.getString("hash");
-        String bucket = Objects.requireNonNull(env.getProperty("google.cloud.storage.bucket"));
-        String contentType = payload.getString("contentType");
+            String hashcode = payload.getString("hash");
+            String bucket = Objects.requireNonNull(env.getProperty("google.cloud.storage.bucket"));
+            String contentType = payload.getString("contentType");
 
-        // uploading
-        BlobId blobId = BlobId.of(bucket, hashcode);
-        BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType(contentType).build();
-        byte[] bytes = payload.getBytes("bytes");
-        Blob blob = storage.create(blobInfo, bytes);
-        String publicUrl = env.getProperty("google.cloud.storage.url") + hashcode;
-        log.info("publicUrl: {}", publicUrl);
+            // uploading
+            BlobId blobId = BlobId.of(bucket, hashcode);
+            BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType(contentType).build();
+            byte[] bytes = payload.getBytes("bytes");
+            Blob blob = storage.create(blobInfo, bytes);
+            String publicUrl = env.getProperty("google.cloud.storage.url") + hashcode;
+            log.info("publicUrl: {}", publicUrl);
 
-        // save into db
-        attachRepo.insert(hashcode, System.currentTimeMillis());
+            // save into db
+            attachRepo.insert(hashcode, System.currentTimeMillis());
+        } catch (Exception e) {
+            log.error("Uploading Google Cloud Storage -人為手動確認消費-監聽器監聽消費消息-發生異常：", e.fillInStackTrace());
+            throw e;
+        }
     }
 
     @Async

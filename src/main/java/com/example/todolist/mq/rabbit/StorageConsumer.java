@@ -44,7 +44,7 @@ public class StorageConsumer {
 
         try {
             JSONObject msg = objectMapper.readValue(message.getBody(), JSONObject.class);
-            log.info("上傳附件-人為手動確認消費-監聽器監聽消費消息-內容為：{} ", msg);
+            // log.info("上傳附件-人為手動確認消費-監聽器監聽消費消息-內容為：{} ", msg);
 
             // TODO upload
 

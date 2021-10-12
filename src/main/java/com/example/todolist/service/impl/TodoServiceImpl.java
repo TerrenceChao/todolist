@@ -202,7 +202,6 @@ public class TodoServiceImpl implements TodoService {
 
         attach.put("hash", hashcode);
         attach.put("size", file.getSize() + "B");
-        attach.put("url", false);
 
         return attach;
     }

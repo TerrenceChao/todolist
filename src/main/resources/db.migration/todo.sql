@@ -9,7 +9,7 @@ create table todo_task_1 (
                              created_at datetime not null,
                              deleted_at datetime null,
                              done datetime null
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
 
 drop table if exists todo_task_2;
 create table todo_task_2 (
@@ -21,16 +21,10 @@ create table todo_task_2 (
                              created_at datetime not null,
                              deleted_at datetime null,
                              done datetime null
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
 
 
 
-
-
-
-
-select * from todo_list_1;
-select * from todo_list_2;
 
 drop table if exists todo_list_1;
 create table todo_list_1 (
@@ -44,7 +38,7 @@ create table todo_list_1 (
                              next_month int(2) not null,
                              next_week_of_year int(2) not null,
                              next_lid bigint(41) null
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
 
 drop table if exists todo_list_2;
 create table todo_list_2 (
@@ -58,4 +52,20 @@ create table todo_list_2 (
                              next_month int(2) not null,
                              next_week_of_year int(2) not null,
                              next_lid bigint(41) null
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
+
+
+
+
+## https://dev.mysql.com/doc/refman/8.0/en/create-index.html
+drop table if exists attachment_1;
+create table attachment_1 (
+                              aid char(32) primary key,
+                              created_at bigint(13) not null
+) ENGINE=MEMORY DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
+
+drop table if exists attachment_2;
+create table attachment_2 (
+                              aid char(32) primary key,
+                              created_at bigint(13) not null
+) ENGINE=MEMORY DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;

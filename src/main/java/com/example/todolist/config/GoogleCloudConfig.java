@@ -24,8 +24,9 @@ public class GoogleCloudConfig {
     @Bean(name = "googleCloudStorage")
     public Storage getCloudStorage() throws IOException {
         String key = Objects.requireNonNull(env.getProperty("google.cloud.storage.key"));
+        String credentialUrl = Objects.requireNonNull(env.getProperty("google.credential.url"));
         GoogleCredentials credentials = GoogleCredentials.fromStream(new FileInputStream(key))
-                .createScoped(Lists.newArrayList("https://www.googleapis.com/auth/cloud-platform"));
+                .createScoped(Lists.newArrayList(credentialUrl));
         Storage storage = StorageOptions.newBuilder().setCredentials(credentials).build().getService();
 
         return storage;

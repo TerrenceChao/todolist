@@ -1,6 +1,8 @@
 package com.example.todolist.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
+import com.example.todolist.db.rmdb.entity.Attachment;
+import com.example.todolist.db.rmdb.repo.AttachmentRepository;
 import com.example.todolist.service.AttachService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +33,9 @@ public class AttachServiceImpl implements AttachService {
     @Autowired
     private RabbitTemplate rabbitTemplate;
 
+    @Autowired
+    private AttachmentRepository attachRepo;
+
     @Override
     public boolean hasAttach(JSONObject payload) {
         // TODO 從 google cloud storage 查詢是否有既存的 檔案
@@ -52,14 +57,22 @@ public class AttachServiceImpl implements AttachService {
     @Override
     public void uploadAttach(Long tid, Integer partitionKey, JSONObject attachments, List<MultipartFile> files) {
         log.info("tid:{}, \nattachments:{}, \nfiles:{} \nfile amount:{}", tid, attachments, files, files.size());
-        files.forEach(file -> {
+        for (MultipartFile file : files) {
             JSONObject message = toMessage(tid, partitionKey, attachments, file);
             if (message.isEmpty()) {
                 log.warn("生產者發送消息-沒有消息本體(null)");
-            } else {
-                sendMessage(message);
+                continue;
             }
-        });
+
+            String hashcode = message.getString("hash");
+            Attachment attachInfo = attachRepo.findById(hashcode);
+            if (Objects.nonNull(attachInfo)) {
+                log.info("該檔案已存在 attach info: {}", attachInfo);
+                continue;
+            }
+
+            sendMessage(message);
+        };
     }
 
     private void sendMessage(JSONObject msg) {

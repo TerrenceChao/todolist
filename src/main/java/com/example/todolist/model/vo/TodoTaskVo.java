@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
 import java.util.Date;
+import java.util.Objects;
 
 @Data
 @Accessors(chain = true)
@@ -66,6 +67,10 @@ public class TodoTaskVo extends BaseVo {
 
     public void setAttachments(String attachmentsStr) {
         this.attachments = JSONObject.parseObject(attachmentsStr);
+    }
+
+    public boolean hasAttachments() {
+        return Objects.nonNull(attachments) && ! attachments.isEmpty();
     }
 
     public JSONObject toNext() {

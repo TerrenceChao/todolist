@@ -12,7 +12,7 @@ public abstract class BaseConsumer<Msg> {
 
     protected abstract Msg transformMsg(byte[] msgBody) throws Exception;
 
-    protected abstract void businessProcess(Msg msg) throws Exception;
+    protected abstract void businessProcess(Msg payload) throws Exception;
 
     protected void consumeMessage(@Payload Message message, Channel channel) throws Exception {
 
@@ -23,7 +23,7 @@ public abstract class BaseConsumer<Msg> {
 
         try {
             Msg msg = transformMsg(message.getBody());
-            log.info("上傳附件-人為手動確認消費-監聽器監聽消費消息-內容為：{} ", msg);
+            // log.info("上傳附件-人為手動確認消費-監聽器監聽消費消息-內容為：{} ", msg);
 
             // do business process
             businessProcess(msg);

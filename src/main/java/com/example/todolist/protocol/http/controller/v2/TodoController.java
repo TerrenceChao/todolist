@@ -54,12 +54,12 @@ public class TodoController {
      *          3) clear cache from ??? to latest cid if 1) is done.
      */
     @PostMapping(value = "/tasks", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
-    public ResponseEntity create(@RequestPart("title") String title, @RequestPart("content") String content, @RequestPart("files") List<MultipartFile> files) throws IOException {
+    public ResponseEntity create(@RequestPart("title") String title, @RequestPart("content") String content, @RequestPart(value = "files", required = false) List<MultipartFile> files) throws IOException {
         // step 1
         TodoTaskVo taskVo = todoService.create(title, content, files);
 
         // TODO step 2 >> async
-        if (Objects.nonNull(files) && ! files.isEmpty()) {
+        if (taskVo.hasAttachments()) {
             attachService.uploadAttach(taskVo.getTid(), taskVo.getWeekOfYear(), taskVo.getAttachments(), files);
         }
 

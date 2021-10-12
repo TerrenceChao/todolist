@@ -12,10 +12,9 @@ import java.util.Date;
 @TableName(value = "attachment")
 public class Attachment {
 
+    /** aid = hashcode */
     @TableId
-    private String hashcode;
+    private String aid;
 
-    private String url;
-
-    private Date createdAt;
+    private Long createdAt;
 }

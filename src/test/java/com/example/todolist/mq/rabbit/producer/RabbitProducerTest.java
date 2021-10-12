@@ -19,7 +19,7 @@ import java.util.UUID;
 
 @Slf4j
 @Component
-public class RabbitProducer implements RabbitTemplate.ConfirmCallback {
+public class RabbitProducerTest implements RabbitTemplate.ConfirmCallback {
 
     @Autowired
     private RabbitTemplate rabbitTemplate;

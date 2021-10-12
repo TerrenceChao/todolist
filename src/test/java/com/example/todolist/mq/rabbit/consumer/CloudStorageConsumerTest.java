@@ -19,7 +19,7 @@ import java.io.IOException;
  */
 @Slf4j
 @Component
-public class CloudStorageConsumer extends BaseConsumer {
+public class CloudStorageConsumerTest extends BaseConsumerTest {
 
 //    @Value("${}")
     private String credentialPath;
@@ -39,7 +39,7 @@ public class CloudStorageConsumer extends BaseConsumer {
     private AttachService attachService;
 
     @Autowired
-    public CloudStorageConsumer(TodoService todoService, AttachService attachService) throws IOException {
+    public CloudStorageConsumerTest(TodoService todoService, AttachService attachService) throws IOException {
 //        credential = GoogleCredentials.fromStream(new FileInputStream(credentialPath));
 //        cloudStorage = StorageOptions.newBuilder()
 //                .setCredentials(credential)
@@ -58,14 +58,10 @@ public class CloudStorageConsumer extends BaseConsumer {
      * @param channel
      * @throws Exception
      */
-    @Override
     protected void workerQueue(String label, Message message, Channel channel) throws Exception {
         try {
             byte[] receiveBytes = message.getBody();
             JSONObject payload = objectMapper.readValue(receiveBytes, JSONObject.class);
-            if (hasAttachment(payload)) {
-                return;
-            }
             
             Blob blob = uploadAttach(payload);
             updateAttach(payload, blob.getMediaLink()); // TODO confirm blob.getMediaLink ??
@@ -77,10 +73,6 @@ public class CloudStorageConsumer extends BaseConsumer {
             //always ack
             channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
         }
-    }
-    
-    private boolean hasAttachment(JSONObject payload) {
-        return attachService.hasAttach(payload);
     }
 
     /**

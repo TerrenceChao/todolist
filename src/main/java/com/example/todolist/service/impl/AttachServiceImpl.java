@@ -36,18 +36,6 @@ public class AttachServiceImpl implements AttachService {
     @Autowired
     private AttachmentRepository attachRepo;
 
-    @Override
-    public boolean hasAttach(JSONObject payload) {
-        // TODO 從 google cloud storage 查詢是否有既存的 檔案
-//        Long tid = payload.getLong("tid");
-//        Integer partitionKey = payload.getInteger("partitionKey");
-//        String filename = payload.getString("filename");
-//        String hash = payload.getString("hash");
-//        ...
-
-        return true;
-    }
-
     /**
      * @param tid
      * @param partitionKey weekOfYear

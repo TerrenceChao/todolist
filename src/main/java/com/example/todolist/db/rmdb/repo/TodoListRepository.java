@@ -19,11 +19,16 @@ public class TodoListRepository {
     @Autowired
     private TodoListMapper todoListMapper;
 
+    public TodoList insert(TodoList todoList) {
+        todoListMapper.insert(todoList);
+        return todoList;
+    }
+
     public List<TodoList> getBatchTodoList(Date startTime, Integer month, Integer weekOfYear, Integer limit) {
         QueryWrapper<TodoList> wrapper = new QueryWrapper<TodoList>()
-                .ge("created_at", new SimpleDateFormat(DATETIME_FORMAT).format(startTime)) // >=
-                .eq("first_month", month) // equal
-                .eq("first_week_of_year", weekOfYear) // equal
+                .ge("first_created_at", new SimpleDateFormat(DATETIME_FORMAT).format(startTime))
+                .eq("first_month", month)
+                .eq("first_week_of_year", weekOfYear)
                 .orderByAsc("lid")
                 .last(" limit " + limit);
 
@@ -32,10 +37,11 @@ public class TodoListRepository {
 
     public List<TodoList> getBatchTodoList(Date startTime, Integer month, Integer weekOfYear, Long lid, Integer limit) {
         QueryWrapper<TodoList> wrapper = new QueryWrapper<TodoList>()
-                .ge("created_at", new SimpleDateFormat(DATETIME_FORMAT).format(startTime)) // >=
-                .eq("first_month", month) // equal
-                .eq("first_week_of_year", weekOfYear) // equal
-                .ge("lid", lid) // >=
+                .select("lid", "first_month", "first_week_of_year", "todo_tasks", "next_lid")
+                .ge("first_created_at", new SimpleDateFormat(DATETIME_FORMAT).format(startTime))
+                .eq("first_month", month)
+                .eq("first_week_of_year", weekOfYear)
+                .ge("lid", lid)
                 .orderByAsc("lid")
                 .last(" limit " + limit);
 

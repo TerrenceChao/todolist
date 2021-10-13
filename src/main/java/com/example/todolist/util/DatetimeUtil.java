@@ -14,12 +14,16 @@ public class DatetimeUtil {
     public Integer getWeekOfYear(Date date) {
         SimpleDateFormat sdf = new SimpleDateFormat(Constant.WEEK_OF_YEAR_FORMAT_V2);
         String weekOfYear = sdf.format(date);
-        return Integer.valueOf(weekOfYear);
+        return Integer.parseInt(weekOfYear);
     }
 
     public Integer getMonth(Date date) {
         SimpleDateFormat sdf = new SimpleDateFormat(Constant.MONTH);
         String month = sdf.format(date);
-        return Integer.valueOf(month);
+        return Integer.parseInt(month);
+    }
+
+    public String toString(Date date) {
+        return new SimpleDateFormat(Constant.DATETIME_FORMAT).format(date);
     }
 }

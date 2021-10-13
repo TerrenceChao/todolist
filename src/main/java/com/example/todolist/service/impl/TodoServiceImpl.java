@@ -80,7 +80,7 @@ public class TodoServiceImpl implements TodoService {
             log.info("hot search with time + tid.  limit: {} startTime: {} tid: {}", limit, startTime, tid);
             tasks = taskRepo.getList(
                     startTime,
-                    Long.valueOf(tid),
+                    Long.parseLong(tid),
                     limit + 1);
         }
 
@@ -91,7 +91,7 @@ public class TodoServiceImpl implements TodoService {
 
         List<TodoTaskVo> taskVos = toTodoTaskVos(tasks);
         int lastOne = taskVos.size() - 1;
-        if (lastOne == 0) {
+        if (lastOne < limit - 1) {
             return new BatchVo(
                     taskVos,
                     limit,
@@ -101,7 +101,6 @@ public class TodoServiceImpl implements TodoService {
         }
 
         TodoTaskVo lastTaskVo = taskVos.remove(lastOne);
-
         return new BatchVo(
                 taskVos,
                 limit,

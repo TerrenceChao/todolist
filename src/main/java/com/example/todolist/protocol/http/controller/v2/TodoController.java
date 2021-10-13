@@ -61,7 +61,7 @@ public class TodoController {
             attachService.uploadAttach(taskVo.getTid(), taskVo.getWeekOfYear(), taskVo.getAttachments(), files);
         }
 
-        // TODO  step 2  1).. 2).. 3)  >> async async async
+        // TODO  step 2  1).. 2).. 3)  >> async + message queue
         // historyListService. ...
 
         return ResponseResult.successPost(taskVo.getTid());
@@ -82,7 +82,7 @@ public class TodoController {
 
     /**
      * TODO 讀取近期的 list 從 todoService (TodoTask)
-     *  讀取歷史的 list 從 historyListService (1筆 TodoList 包含 100 筆 TodoTask)
+     *  讀取歷史的 list 從 historyListService (1筆 TodoList 包含 K 筆 TodoTask)
      * @param startTime
      * @param seq (not required) if null, get the min seq of the time
      * @param limit
@@ -96,7 +96,7 @@ public class TodoController {
     ) {
 
         // TODO 視情況而從不同的來源獲取 list (todoService, historyListService)
-        return ResponseResult.successGet(todoService.getList(startTime, seq, limit));
+        return ResponseResult.successGet(historyListService.getList(startTime, seq, limit));
     }
 
 }

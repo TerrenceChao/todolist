@@ -33,11 +33,8 @@ create table todo_list_1 (
                              first_created_at datetime not null,
                              first_month int(2) not null,
                              first_week_of_year int(2) not null,
-                             last_created_at datetime null,
-
-                             next_month int(2) not null,
-                             next_week_of_year int(2) not null,
-                             next_lid bigint(41) null
+                             next_lid bigint(41) null,
+                             next_created_at datetime not null
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
 
 drop table if exists todo_list_2;
@@ -47,11 +44,8 @@ create table todo_list_2 (
                              first_created_at datetime not null,
                              first_month int(2) not null,
                              first_week_of_year int(2) not null,
-                             last_created_at datetime null,
-
-                             next_month int(2) not null,
-                             next_week_of_year int(2) not null,
-                             next_lid bigint(41) null
+                             next_lid bigint(41) null,
+                             next_created_at datetime not null
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
 
 

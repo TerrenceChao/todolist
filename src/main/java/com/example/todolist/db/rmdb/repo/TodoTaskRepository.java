@@ -48,7 +48,7 @@ public class TodoTaskRepository {
     }
 
     /**
-     * TODO Hot task 用
+     * for hot task
      * @param startTime
      * @param tid
      * @param limit
@@ -65,7 +65,7 @@ public class TodoTaskRepository {
     }
 
     /**
-     * TODO Hot task 用
+     * for hot task
      * @param startTime
      * @param limit
      * @return
@@ -80,7 +80,7 @@ public class TodoTaskRepository {
     }
 
     /**
-     * TODO used in transform
+     * for transform
      * @param tid
      * @param limit
      * @return

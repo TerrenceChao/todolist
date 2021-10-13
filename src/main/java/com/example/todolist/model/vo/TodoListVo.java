@@ -17,7 +17,7 @@ import java.util.List;
 public class TodoListVo extends BaseVo {
 
     /**
-     * 100 筆 todo_task 的第一筆 tid
+     * K 筆 todo_task 的第一筆 tid
      */
     private Long lid;
 
@@ -26,29 +26,44 @@ public class TodoListVo extends BaseVo {
     private Date firstCreatedAt;
 
     /**
-     * 第一筆 created_at 的月份
+     * 第 1 筆 created_at 的月份
      * TODO sharding key 平衡 多庫 讀取流量
      */
     private Integer firstMonth;
 
     /**
-     * 第一筆 created_at 的週
+     * 第 1 筆 created_at 的週
      * TODO partition key 平衡 單庫 讀取流量
      */
     private Integer firstWeekOfYear;
 
+//    /**
+//     * K 筆 todo_task 的最後一筆 lid
+//     */
+//    private Long lastLid;
+
     /**
-     * 100 筆 todo_task 的最後一筆 created_at
+     * "下一批" K 筆 todo_task 的第一筆 tid
      */
-    private Date lastCreatedAt;
+    private Long nextLid;
+
+    /**
+     *  "下一批" K 筆 todo_task 的第一筆 created_at
+     */
+    private Date nextCreatedAt;
 
     public TodoListVo(TodoList todoList) {
         setLid(todoList.getLid());
         setTodoTasks(todoList.getTodoTasks());
+
         setFirstCreatedAt(todoList.getFirstCreatedAt());
         setFirstMonth(todoList.getFirstMonth());
         setFirstWeekOfYear(todoList.getFirstWeekOfYear());
-        setLastCreatedAt(todoList.getLastCreatedAt());
+
+//        setLastLid(todoList.getLastLid());
+
+        setNextLid(todoList.getNextLid());
+        setNextCreatedAt(todoList.getNextCreatedAt());
     }
 
     public void setTodoTasks(String todoTasksStr) {
@@ -58,8 +73,8 @@ public class TodoListVo extends BaseVo {
     public JSONObject toNext() {
         JSONObject json = new JSONObject();
         // seq: lid
-        json.put("seq", lid);
-        json.put("createdAt", firstCreatedAt);
+        json.put("seq", nextLid);
+        json.put("createdAt", nextCreatedAt);
 
         return json;
     }
@@ -74,9 +89,9 @@ public class TodoListVo extends BaseVo {
         String[] values = seq.split("-");
 
         TodoSeqVo seqVo = new TodoSeqVo()
-            .setMonth(Integer.valueOf(values[0]))
-            .setWeekOfYear(Integer.valueOf(values[1]))
-            .setLid(Long.valueOf(values[2]));
+            .setMonth(Integer.parseInt(values[0]))
+            .setWeekOfYear(Integer.parseInt(values[1]))
+            .setLid(Long.parseLong(values[2]));
 
         log.info("parse content: {}", seqVo);
 
@@ -105,11 +120,12 @@ public class TodoListVo extends BaseVo {
      */
     private TodoTaskVo toTaskVo(JSONObject taskJson) {
         return new TodoTaskVo()
-                .setTid(taskJson.getLong("tid"))
-                .setTitle(taskJson.getString("title"))
-                .setContent(taskJson.getString("content"))
-                .setWeekOfYear(taskJson.getInteger("weekOfYear"))
-                .setDeletedAt(taskJson.getDate("deletedAt"));
+            .setTid(taskJson.getLong("tid"))
+            .setTitle(taskJson.getString("title"))
+            .setContent(taskJson.getString("content"))
+            .setWeekOfYear(taskJson.getInteger("weekOfYear"))
+            .setCreatedAt(taskJson.getDate("createdAt"))
+            .setDeletedAt(taskJson.getDate("deletedAt"));
     }
 
 }

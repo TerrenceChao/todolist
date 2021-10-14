@@ -9,7 +9,6 @@ import com.example.todolist.service.HistoryListService;
 import com.example.todolist.service.TodoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +19,6 @@ import javax.validation.constraints.NotBlank;
 import java.io.IOException;
 import java.util.Date;
 import java.util.List;
-import java.util.Objects;
 
 @RequiredArgsConstructor
 @RequestMapping("/v2/todo")
@@ -54,16 +52,16 @@ public class TodoController {
      *          3) clear cache from ??? to latest cid if 1) is done.
      */
     @PostMapping(value = "/tasks", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
-    public ResponseEntity create(@RequestPart("title") String title, @RequestPart("content") String content, @RequestPart("files") List<MultipartFile> files) throws IOException {
+    public ResponseEntity create(@RequestPart("title") String title, @RequestPart("content") String content, @RequestPart(value = "files", required = false) List<MultipartFile> files) throws IOException {
         // step 1
         TodoTaskVo taskVo = todoService.create(title, content, files);
 
         // TODO step 2 >> async
-        if (Objects.nonNull(files) && ! files.isEmpty()) {
+        if (taskVo.hasAttachments()) {
             attachService.uploadAttach(taskVo.getTid(), taskVo.getWeekOfYear(), taskVo.getAttachments(), files);
         }
 
-        // TODO  step 2  1).. 2).. 3)  >> async async async
+        // TODO  step 2  1).. 2).. 3)  >> async + message queue
         // historyListService. ...
 
         return ResponseResult.successPost(taskVo.getTid());
@@ -84,7 +82,7 @@ public class TodoController {
 
     /**
      * TODO 讀取近期的 list 從 todoService (TodoTask)
-     *  讀取歷史的 list 從 historyListService (1筆 TodoList 包含 100 筆 TodoTask)
+     *  讀取歷史的 list 從 historyListService (1筆 TodoList 包含 K 筆 TodoTask)
      * @param startTime
      * @param seq (not required) if null, get the min seq of the time
      * @param limit
@@ -94,10 +92,14 @@ public class TodoController {
     public ResponseEntity getList(
             @NotBlank @RequestParam @DateTimeFormat(pattern = Constant.DATETIME_FORMAT) Date startTime,
             @NotBlank @RequestParam(required = false) String seq,
-            @NotBlank @RequestParam Integer limit
+            @NotBlank @RequestParam Integer limit,
+            @NotBlank @RequestParam(required = false) boolean improve
     ) {
-
         // TODO 視情況而從不同的來源獲取 list (todoService, historyListService)
+        if (improve) {
+            return ResponseResult.successGet(historyListService.getList(startTime, seq, limit));
+        }
+
         return ResponseResult.successGet(todoService.getList(startTime, seq, limit));
     }
 

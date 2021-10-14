@@ -19,23 +19,37 @@ public class TodoListRepository {
     @Autowired
     private TodoListMapper todoListMapper;
 
+    public TodoList insert(TodoList todoList) {
+        todoListMapper.insert(todoList);
+        return todoList;
+    }
+
     public List<TodoList> getBatchTodoList(Date startTime, Integer month, Integer weekOfYear, Integer limit) {
         QueryWrapper<TodoList> wrapper = new QueryWrapper<TodoList>()
-                .ge("created_at", new SimpleDateFormat(DATETIME_FORMAT).format(startTime)) // >=
-                .eq("first_month", month) // equal
-                .eq("first_week_of_year", weekOfYear) // equal
+                .ge("first_created_at", new SimpleDateFormat(DATETIME_FORMAT).format(startTime))
+                .eq("first_month", month)
+                .eq("first_week_of_year", weekOfYear)
                 .orderByAsc("lid")
                 .last(" limit " + limit);
 
         return todoListMapper.selectList(wrapper);
     }
 
+    /**
+     * TODO "夾擠定理": first_created_at <= [target] && [target] <= lid
+     * @param startTime
+     * @param month
+     * @param weekOfYear
+     * @param lid
+     * @param limit
+     * @return
+     */
     public List<TodoList> getBatchTodoList(Date startTime, Integer month, Integer weekOfYear, Long lid, Integer limit) {
         QueryWrapper<TodoList> wrapper = new QueryWrapper<TodoList>()
-                .ge("created_at", new SimpleDateFormat(DATETIME_FORMAT).format(startTime)) // >=
-                .eq("first_month", month) // equal
-                .eq("first_week_of_year", weekOfYear) // equal
-                .ge("lid", lid) // >=
+                .ge("first_created_at", new SimpleDateFormat(DATETIME_FORMAT).format(startTime))
+                .eq("first_month", month)
+                .eq("first_week_of_year", weekOfYear)
+                .le("lid", lid)
                 .orderByAsc("lid")
                 .last(" limit " + limit);
 

@@ -7,6 +7,5 @@ import java.util.List;
 
 public interface AttachService {
 
-    boolean hasAttach(JSONObject payload);
     void uploadAttach(Long tid, Integer partitionKey, JSONObject attachments, List<MultipartFile> files);
 }

@@ -5,17 +5,17 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
-import java.util.Date;
+import java.io.Serializable;
+
 
 @Data
 @Accessors(chain = true)
 @TableName(value = "attachment")
-public class Attachment {
+public class Attachment implements Serializable {
 
+    /** aid = hashcode */
     @TableId
-    private String hashcode;
+    private String aid;
 
-    private String url;
-
-    private Date createdAt;
+    private Long createdAt;
 }

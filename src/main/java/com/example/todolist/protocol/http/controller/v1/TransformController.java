@@ -18,7 +18,7 @@ public class TransformController {
     @Autowired
     private HistoryListService historyListService;
 
-    @PostMapping(value = "/transform", consumes = { MediaType.APPLICATION_JSON_VALUE })
+    @PostMapping(value = "/", consumes = { MediaType.APPLICATION_JSON_VALUE })
     public ResponseEntity transform(@RequestBody TransformBo transformBo) {
         BatchVo vo = historyListService.transform(transformBo.getSeq(), transformBo.getLimit());
         return ResponseResult.successPost(vo);

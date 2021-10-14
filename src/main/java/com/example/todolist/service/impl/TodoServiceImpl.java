@@ -1,6 +1,5 @@
 package com.example.todolist.service.impl;
 
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.example.todolist.db.rmdb.entity.TodoTask;
 import com.example.todolist.db.rmdb.repo.TodoTaskRepository;
@@ -40,23 +39,13 @@ public class TodoServiceImpl implements TodoService {
         Integer weekOfYear = dateUtil.getWeekOfYear(now);
 
         TodoTask newTask;
-        if (Objects.nonNull(attachments)) {
-            newTask = taskRepo.insert(
-                    todoTaskBo.getTitle(),
-                    todoTaskBo.getContent(),
-                    attachments.toJSONString(),
-                    weekOfYear,
-                    now
-            );
-        } else {
-            newTask = taskRepo.insert(
-                    todoTaskBo.getTitle(),
-                    todoTaskBo.getContent(),
-                    null,
-                    weekOfYear,
-                    now
-            );
-        }
+        newTask = taskRepo.insert(
+                todoTaskBo.getTitle(),
+                todoTaskBo.getContent(),
+                Objects.nonNull(attachments)? attachments.toJSONString() : null,
+                weekOfYear,
+                now
+        );
 
         log.info("create a task. task: {}", newTask);
 
@@ -80,7 +69,7 @@ public class TodoServiceImpl implements TodoService {
             log.info("hot search with time + tid.  limit: {} startTime: {} tid: {}", limit, startTime, tid);
             tasks = taskRepo.getList(
                     startTime,
-                    Long.valueOf(tid),
+                    Long.parseLong(tid),
                     limit + 1);
         }
 
@@ -91,7 +80,7 @@ public class TodoServiceImpl implements TodoService {
 
         List<TodoTaskVo> taskVos = toTodoTaskVos(tasks);
         int lastOne = taskVos.size() - 1;
-        if (lastOne == 0) {
+        if (lastOne <= limit - 1) {
             return new BatchVo(
                     taskVos,
                     limit,
@@ -101,7 +90,6 @@ public class TodoServiceImpl implements TodoService {
         }
 
         TodoTaskVo lastTaskVo = taskVos.remove(lastOne);
-
         return new BatchVo(
                 taskVos,
                 limit,
@@ -202,7 +190,6 @@ public class TodoServiceImpl implements TodoService {
 
         attach.put("hash", hashcode);
         attach.put("size", file.getSize() + "B");
-        attach.put("url", false);
 
         return attach;
     }

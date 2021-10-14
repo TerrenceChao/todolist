@@ -36,7 +36,7 @@ public class TodoListRepository {
     }
 
     /**
-     * TODO "夾擠定理": first_created_at <= [target] && [target] <= lid
+     * Key point: first_created_at <= [target] && next_lid <= [target]
      * @param startTime
      * @param month
      * @param weekOfYear
@@ -49,7 +49,8 @@ public class TodoListRepository {
                 .ge("first_created_at", new SimpleDateFormat(DATETIME_FORMAT).format(startTime))
                 .eq("first_month", month)
                 .eq("first_week_of_year", weekOfYear)
-                .le("lid", lid)
+                // TODO add index or be PK for 'next_lid'
+                .ge("next_lid", lid)
                 .orderByAsc("lid")
                 .last(" limit " + limit);
 

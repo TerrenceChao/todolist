@@ -21,8 +21,6 @@ public class TodoListVo extends BaseVo {
      */
     private Long lid;
 
-    private JSONArray todoTasks;
-
     private Date firstCreatedAt;
 
     /**
@@ -36,6 +34,8 @@ public class TodoListVo extends BaseVo {
      * TODO partition key 平衡 單庫 讀取流量
      */
     private Integer firstWeekOfYear;
+
+    private JSONArray todoTasks;
 
 //    /**
 //     * K 筆 todo_task 的最後一筆 lid
@@ -54,12 +54,12 @@ public class TodoListVo extends BaseVo {
 
     public TodoListVo(TodoList todoList) {
         setLid(todoList.getLid());
-        setTodoTasks(todoList.getTodoTasks());
 
         setFirstCreatedAt(todoList.getFirstCreatedAt());
         setFirstMonth(todoList.getFirstMonth());
         setFirstWeekOfYear(todoList.getFirstWeekOfYear());
 
+        setTodoTasks(todoList.getTodoTasks());
 //        setLastLid(todoList.getLastLid());
 
         setNextLid(todoList.getNextLid());

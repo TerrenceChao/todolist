@@ -92,11 +92,15 @@ public class TodoController {
     public ResponseEntity getList(
             @NotBlank @RequestParam @DateTimeFormat(pattern = Constant.DATETIME_FORMAT) Date startTime,
             @NotBlank @RequestParam(required = false) String seq,
-            @NotBlank @RequestParam Integer limit
+            @NotBlank @RequestParam Integer limit,
+            @NotBlank @RequestParam(required = false) boolean improve
     ) {
-
         // TODO 視情況而從不同的來源獲取 list (todoService, historyListService)
-        return ResponseResult.successGet(historyListService.getList(startTime, seq, limit));
+        if (improve) {
+            return ResponseResult.successGet(historyListService.getList(startTime, seq, limit));
+        }
+
+        return ResponseResult.successGet(todoService.getList(startTime, seq, limit));
     }
 
 }

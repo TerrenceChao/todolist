@@ -35,13 +35,21 @@ public class TodoListRepository {
         return todoListMapper.selectList(wrapper);
     }
 
+    /**
+     * TODO "夾擠定理": first_created_at <= [target] && [target] <= lid
+     * @param startTime
+     * @param month
+     * @param weekOfYear
+     * @param lid
+     * @param limit
+     * @return
+     */
     public List<TodoList> getBatchTodoList(Date startTime, Integer month, Integer weekOfYear, Long lid, Integer limit) {
         QueryWrapper<TodoList> wrapper = new QueryWrapper<TodoList>()
-                .select("lid", "first_month", "first_week_of_year", "todo_tasks", "next_lid")
                 .ge("first_created_at", new SimpleDateFormat(DATETIME_FORMAT).format(startTime))
                 .eq("first_month", month)
                 .eq("first_week_of_year", weekOfYear)
-                .ge("lid", lid)
+                .le("lid", lid)
                 .orderByAsc("lid")
                 .last(" limit " + limit);
 

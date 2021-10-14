@@ -37,11 +37,15 @@ public class HistoryListServiceImpl implements HistoryListService {
 
     /**
      * @param tid todo_task: tid
-     * @param limit TODO: 限制為 10 的倍數
+     * @param limit 限制為 10 的倍數
      * @return
      */
     @Override
     public BatchVo transform(String tid, Integer limit) {
+        if (lessThanMin(limit)) {
+            // TODO define exception
+            return new BatchVo(limit);
+        }
 
         log.info("hot search with tid.  limit: {} tid: {}", limit, tid);
         List<TodoTask> tasks = taskRepo.getList(Long.valueOf(tid), limit + 1);
@@ -58,17 +62,6 @@ public class HistoryListServiceImpl implements HistoryListService {
 
         TodoListVo listVo = new TodoListVo(todoList);
         List<TodoTaskVo> taskVos = mergeTodoTaskVos(new ArrayList(){{ add(listVo); }});
-        int lastOne = taskVos.size() - 1;
-        if (lastOne < limit - 1) {
-            return new BatchVo(
-                    taskVos,
-                    limit,
-                    taskVos.size(),
-                    null
-            );
-        }
-
-        taskVos.remove(lastOne);
         return new BatchVo(
                 taskVos,
                 limit,
@@ -113,13 +106,12 @@ public class HistoryListServiceImpl implements HistoryListService {
             return new BatchVo(limit);
         }
 
-        long firstTid = Long.valueOf(tid);
         List<TodoListVo> todoListVos = toTodoListVos(todoListCollect);
         List<TodoTaskVo> taskVos = mergeTodoTaskVos(todoListVos);
-        taskVos = filterTodoTaskVos(taskVos, firstTid, limit + 1);
+        taskVos = filterTodoTaskVos(taskVos, startTime, tid, limit + 1);
 
         int lastOne = taskVos.size() - 1;
-        if (lastOne < limit - 1) {
+        if (lastOne <= limit - 1) {
             return new BatchVo(
                     taskVos,
                     limit,
@@ -137,17 +129,23 @@ public class HistoryListServiceImpl implements HistoryListService {
         );
     }
 
+    private boolean lessThanMin(Integer limit) {
+        String min = Objects.requireNonNullElse(env.getProperty("todo-list.min"), "10");
+        return limit < Integer.parseInt(min);
+    }
+
     private TodoList generateTodoList(List<TodoTask> tasks, int firstMonth, int contentPrefixLen) {
         TodoTask firstTask = tasks.get(0);
+
+        // 移除最後一個，當下一批次的第一筆 TodoTask
+        int nextBatchIdx = tasks.size() - 1;
+        TodoTask nextBatchTask = tasks.remove(nextBatchIdx);
 
         JSONArray jsonArray = new JSONArray();
         for (TodoTask task : tasks) {
             jsonArray.add(task.toJSON(contentPrefixLen));
         }
         String todoTasks = jsonArray.toJSONString();
-
-        int nextBatchIdx = tasks.size() - 1;
-        TodoTask nextBatchTask = tasks.get(nextBatchIdx);
 
         return new TodoList(
                 firstTask.getTid(),
@@ -161,7 +159,7 @@ public class HistoryListServiceImpl implements HistoryListService {
     }
 
     private boolean exceedMaxLimit(Integer limit) {
-        String max = Objects.requireNonNull(env.getProperty("todo-list.max"));
+        String max = Objects.requireNonNullElse(env.getProperty("todo-list.max"), "100");
         return Integer.parseInt(max) < limit;
     }
 
@@ -184,20 +182,41 @@ public class HistoryListServiceImpl implements HistoryListService {
     }
 
     /**
-     * 透過二元搜尋加速
+     *
      * @param taskVos
-     * @param targetTid
+     * @param startTime
+     * @param firstTid
      * @param limit
      * @return
      */
-    private List<TodoTaskVo> filterTodoTaskVos(List<TodoTaskVo> taskVos, long targetTid, int limit) {
+    private List<TodoTaskVo> filterTodoTaskVos(List<TodoTaskVo> taskVos, Date startTime, String firstTid, int limit) {
+        int startIdx;
+        if (Objects.nonNull(firstTid)) {
+            long targetTid = Long.parseLong(firstTid);
+            startIdx = getStartIdxById(taskVos, targetTid);
+        } else {
+            long targetTime = startTime.getTime();
+            startIdx = getStartIdxByTimestamp(taskVos, targetTime);
+        }
+
+        int endIdx = Math.min(taskVos.size(), startIdx + limit);
+        return taskVos.subList(startIdx, endIdx);
+    }
+
+    /**
+     * Using Binary Search
+     * @param taskVos
+     * @param targetTid
+     * @return
+     */
+    private int getStartIdxById(List<TodoTaskVo> taskVos, long targetTid) {
         TodoTaskVo task;
         int srt = 0,
             end = taskVos.size() - 1,
             mid,
-            fromIdx = 0;
+            startIdx = 0;
 
-        while (srt < end) {
+        while (srt + 1 < end) {
             mid = srt + (end - srt) / 2;
             task = taskVos.get(mid);
 
@@ -207,7 +226,7 @@ public class HistoryListServiceImpl implements HistoryListService {
                 continue;
             }
 
-            fromIdx = mid;
+            startIdx = mid;
             if (midTid < targetTid) {
                 srt = mid;
             } else {
@@ -215,7 +234,40 @@ public class HistoryListServiceImpl implements HistoryListService {
             }
         }
 
-        int toIndex = Math.min(taskVos.size(), fromIdx + limit);
-        return taskVos.subList(fromIdx, toIndex);
+        return startIdx;
+    }
+
+    /**
+     * Using Binary Search
+     * @param taskVos
+     * @param targetTime
+     * @return
+     */
+    private int getStartIdxByTimestamp(List<TodoTaskVo> taskVos, long targetTime) {
+        TodoTaskVo task;
+        int srt = 0,
+            end = taskVos.size() - 1,
+            mid,
+            startIdx = 0;
+
+        while (srt + 1 < end) {
+            mid = srt + (end - srt) / 2;
+            task = taskVos.get(mid);
+
+            long midTime = task.getCreatedAt().getTime();
+            if (targetTime < midTime) {
+                end = mid;
+                continue;
+            }
+
+            startIdx = mid;
+            if (midTime < targetTime) {
+                srt = mid;
+            } else {
+                break;
+            }
+        }
+
+        return startIdx;
     }
 }

@@ -47,10 +47,10 @@ public class HistoryListServiceImpl implements HistoryListService {
             return new BatchVo(limit);
         }
 
-        log.info("hot search with tid.  limit: {} tid: {}", limit, tid);
+        log.info("transformation.  limit: {} tid: {}", limit, tid);
         List<TodoTask> tasks = taskRepo.getList(Long.valueOf(tid), limit + 1);
         if (tasks.size() < limit) {
-            log.info("the transformation returns empty.  limit: {} tid: {}", limit, tid);
+            log.info("The todo-tasks amount is not enough.  limit: {} tid: {}", limit, tid);
             return new BatchVo(limit);
         }
 

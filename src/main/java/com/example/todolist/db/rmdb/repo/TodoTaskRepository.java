@@ -65,7 +65,7 @@ public class TodoTaskRepository {
     }
 
     /**
-     * for hot task
+     * for hot task & transform
      * @param startTime
      * @param limit
      * @return
@@ -90,6 +90,19 @@ public class TodoTaskRepository {
             .ge("tid", tid)
             .orderByAsc("tid")
             .last(" limit " + limit);
+
+        return todoTaskMapper.selectList(wrapper);
+    }
+
+    /**
+     * for transform
+     * @param limit
+     * @return
+     */
+    public List<TodoTask> getList(Integer limit) {
+        QueryWrapper<TodoTask> wrapper = new QueryWrapper<TodoTask>()
+                .orderByAsc("tid")
+                .last(" limit " + limit);
 
         return todoTaskMapper.selectList(wrapper);
     }

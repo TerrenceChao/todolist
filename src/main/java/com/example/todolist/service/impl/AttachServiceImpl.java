@@ -66,8 +66,8 @@ public class AttachServiceImpl implements AttachService {
     private void sendMessage(JSONObject msg) {
         try {
             rabbitTemplate.setMessageConverter(new Jackson2JsonMessageConverter());
-            rabbitTemplate.setExchange(env.getProperty("mq.basic.exchange"));
-            rabbitTemplate.setRoutingKey(env.getProperty("mq.basic.routing.key"));
+            rabbitTemplate.setExchange(env.getProperty("mq.attach.exchange"));
+            rabbitTemplate.setRoutingKey(env.getProperty("mq.attach.routing.key"));
 
             Message message = MessageBuilder.withBody(objectMapper.writeValueAsBytes(msg))
                     .setDeliveryMode(MessageDeliveryMode.PERSISTENT)

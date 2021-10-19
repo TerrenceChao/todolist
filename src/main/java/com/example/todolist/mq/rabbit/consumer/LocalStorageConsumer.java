@@ -26,12 +26,12 @@ public class LocalStorageConsumer extends BaseConsumer<JSONObject> {
     private ObjectMapper objectMapper;
 
     @Override
-    public JSONObject transformMsg(byte[] msgBody) throws Exception {
+    protected JSONObject transformMsg(byte[] msgBody) throws Exception {
         return objectMapper.readValue(msgBody, JSONObject.class);
     }
 
     @Override
-    public void businessProcess(JSONObject payload) throws Exception {
+    protected void businessProcess(JSONObject payload) throws Exception {
         try {
             log.info("\n本地儲存檔案 \ntid: {}, \nfilename: {}, \nhash: {}\n", payload.getString("tid"), payload.getString("filename"), payload.getString("hash"));
 
@@ -49,7 +49,7 @@ public class LocalStorageConsumer extends BaseConsumer<JSONObject> {
 
 //    @Async
 //    @RabbitListener(
-//            queues = "${mq.basic.queue}",
+//            queues = "${mq.attach.queue}",
 //            containerFactory = "singleListenerContainer"
 //    )
     public void uploadAttach(@Payload Message message, Channel channel) throws Exception {

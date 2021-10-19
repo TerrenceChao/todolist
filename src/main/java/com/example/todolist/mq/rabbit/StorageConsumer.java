@@ -19,7 +19,7 @@ public class StorageConsumer {
     private ObjectMapper objectMapper;
 
 //    @RabbitListener(
-//            queues = "${mq.basic.queue}",
+//            queues = "${mq.attach.queue}",
 //            containerFactory = "singleListenerContainer"
 //    )
 //    public void uploadAttach(@Payload byte[] msg) {
@@ -32,7 +32,7 @@ public class StorageConsumer {
 //    }
 
 //    @RabbitListener(
-//            queues = "${mq.basic.queue}",
+//            queues = "${mq.attach.queue}",
 //            containerFactory = "singleListenerContainer"
 //    )
     public void uploadAttach(@Payload Message message, Channel channel) throws Exception {

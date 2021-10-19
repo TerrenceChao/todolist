@@ -36,38 +36,82 @@ public class HistoryListServiceImpl implements HistoryListService {
     private DatetimeUtil dateUtil;
 
     /**
+     * TODO 補償機制 由外部 scheduler 觸發
+     * @param limit
+     * @return
+     */
+    @Override
+    public BatchVo transform(Integer limit) {
+        if (lessThanMin(limit) || exceedMaxLimit(limit)) {
+            // TODO define exception
+            return new BatchVo(limit);
+        }
+
+        TodoList latestOne = todoListRepo.getLatestOne();
+        if (Objects.isNull(latestOne)) {
+            int limitPlusOne = limit + 1;
+            List<TodoTask> tasks = taskRepo.getList(limitPlusOne);
+            if (tasks.size() < limitPlusOne) {
+                log.warn("The todo-tasks amount is not enough.  limit: {}", limit);
+                // TODO define exception
+                return new BatchVo(limit);
+            }
+
+            return insertAndMerge(tasks, limit);
+        }
+
+        Long latestLid = latestOne.getNextLid();
+        return transform(String.valueOf(latestLid), limit);
+    }
+
+    @Override
+    public BatchVo transform(Date startTime, Integer limit) {
+        if (lessThanMin(limit) || exceedMaxLimit(limit)) {
+            // TODO define exception
+            return new BatchVo(limit);
+        }
+
+        Integer month = dateUtil.getMonth(startTime);
+        Integer weekOfYear = dateUtil.getWeekOfYear(startTime);
+        TodoList latestOne = todoListRepo.getLatestOne(startTime, month, weekOfYear);
+        if (Objects.isNull(latestOne)) {
+            int limitPlusOne = limit + 1;
+            List<TodoTask> tasks = taskRepo.getList(startTime, limitPlusOne);
+            if (tasks.size() < limitPlusOne) {
+                log.warn("The todo-tasks amount is not enough.  limit: {}", limit);
+                // TODO define exception
+                return new BatchVo(limit);
+            }
+
+            return insertAndMerge(tasks, limit);
+        }
+
+        Long latestLid = latestOne.getNextLid();
+        return transform(String.valueOf(latestLid), limit);
+    }
+
+    /**
      * @param tid todo_task: tid
      * @param limit 限制為 10 的倍數
      * @return
      */
     @Override
     public BatchVo transform(String tid, Integer limit) {
-        if (lessThanMin(limit)) {
+        if (lessThanMin(limit) || exceedMaxLimit(limit)) {
             // TODO define exception
             return new BatchVo(limit);
         }
 
         log.info("transformation.  limit: {} tid: {}", limit, tid);
-        List<TodoTask> tasks = taskRepo.getList(Long.valueOf(tid), limit + 1);
-        if (tasks.size() < limit) {
-            log.info("The todo-tasks amount is not enough.  limit: {} tid: {}", limit, tid);
+        int limitPlusOne = limit + 1;
+        List<TodoTask> tasks = taskRepo.getList(Long.valueOf(tid), limitPlusOne);
+        if (tasks.size() < limitPlusOne) {
+            log.warn("The todo-tasks amount is not enough.  limit: {} tid: {}", limit, tid);
+            // TODO define exception
             return new BatchVo(limit);
         }
 
-        TodoTask firstTask = tasks.get(0);
-        int firstMonth = dateUtil.getMonth(firstTask.getCreatedAt());
-        int contentPrefixLen = Integer.parseInt(Objects.requireNonNullElse(env.getProperty("todo-task.content.preview-length"), "10"));
-        TodoList todoList = generateTodoList(tasks, firstMonth, contentPrefixLen);
-        todoListRepo.insert(todoList);
-
-        TodoListVo listVo = new TodoListVo(todoList);
-        List<TodoTaskVo> taskVos = mergeTodoTaskVos(new ArrayList(){{ add(listVo); }});
-        return new BatchVo(
-                taskVos,
-                limit,
-                taskVos.size(),
-                listVo.toNext()
-        );
+        return insertAndMerge(tasks, limit);
     }
 
     /**
@@ -102,7 +146,8 @@ public class HistoryListServiceImpl implements HistoryListService {
         }
 
         if (todoListCollect.isEmpty()) {
-            log.info("[history] search with empty returned.  limit: {} startTime: {} tid: {}", limit, startTime, tid);
+            log.warn("[history] search with empty returned.  limit: {} startTime: {} tid: {}", limit, startTime, tid);
+            // TODO define exception
             return new BatchVo(limit);
         }
 
@@ -130,8 +175,25 @@ public class HistoryListServiceImpl implements HistoryListService {
     }
 
     private boolean lessThanMin(Integer limit) {
-        String min = Objects.requireNonNullElse(env.getProperty("todo-list.min"), "10");
+        String min = Objects.requireNonNullElse(env.getProperty("todo-task.min"), "10");
         return limit < Integer.parseInt(min);
+    }
+    
+    private BatchVo insertAndMerge(List<TodoTask> tasks, Integer limit) {
+        TodoTask firstTask = tasks.get(0);
+        int firstMonth = dateUtil.getMonth(firstTask.getCreatedAt());
+        int contentPrefixLen = Integer.parseInt(Objects.requireNonNullElse(env.getProperty("todo-task.content.preview-length"), "10"));
+        TodoList todoList = generateTodoList(tasks, firstMonth, contentPrefixLen);
+        todoListRepo.insert(todoList);
+
+        TodoListVo listVo = new TodoListVo(todoList);
+        List<TodoTaskVo> taskVos = mergeTodoTaskVos(new ArrayList(){{ add(listVo); }});
+        return new BatchVo(
+                taskVos,
+                limit,
+                taskVos.size(),
+                listVo.toNext()
+        );
     }
 
     private TodoList generateTodoList(List<TodoTask> tasks, int firstMonth, int contentPrefixLen) {
@@ -159,7 +221,7 @@ public class HistoryListServiceImpl implements HistoryListService {
     }
 
     private boolean exceedMaxLimit(Integer limit) {
-        String max = Objects.requireNonNullElse(env.getProperty("todo-list.max"), "100");
+        String max = Objects.requireNonNullElse(env.getProperty("todo-task.max"), "100");
         return Integer.parseInt(max) < limit;
     }
 

@@ -31,20 +31,41 @@ public class TodoController {
     private HistoryListService historyListService;
 
     /**
+     * RequestBody and Multipart on Spring Boot (json + attach file)
+     * https://blogs.perficient.com/2020/07/27/requestbody-and-multipart-on-spring-boot/
      *
-     * @param title
-     * @param content
-     * @param files
-     * @return
-     * @throws IOException
+     * TODO 1) How WebFlux works?
+     *
+     * TODO 2) 每 "K" 筆(寫入流量很大怎辦???, 用 MQ 異步解決) 或是 30 secs(寫入過慢) 寫入 DB: todo_list;  >>> !?!??!?
+     *  不到 "K" 筆在 redis 需要記錄 idx 1 ~ idx K (最新的 < "K" 筆)  >>> !?!??!?
+     *  1. create one in DB
+     *  2. send attachments (async)
+     *  3. if the amount of latest tasks in cache(redis) < "K" ?  >>> !?!??!?
+     *      Y: read one from DB and write cache
+     *      N:  1) mark/label for these "K" tasks.
+     *          2) write into todo_list; using RabbitMQ
+     *          3) clear cache from ??? to latest cid if 1) is done.
      */
     @PostMapping(value = "/tasks", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
     public ResponseEntity create(@RequestPart("title") String title, @RequestPart("content") String content, @RequestPart("files") List<MultipartFile> files) throws IOException {
         TodoTaskVo taskVo = todoService.create(title, content, files);
+
+//        // step 2 >> async + message queue
+//        if (taskVo.hasAttachments()) {
+//            attachService.uploadAttach(tid, taskVo.getWeekOfYear(), taskVo.getAttachments(), files);
+//        }
+//
+//        // step 3 >> async + message queue
+//        if (transformService.needTransform(tid)) {
+//            transformService.sendMsg(tid);
+//        }
+
         return ResponseResult.successPost(taskVo.getTid());
     }
 
     /**
+     * 單庫透過 week_of_year 做分表, 所以除了 tid(PK) 以外，再透過 week_of_year
+     * 針對特定 partition 查詢，如此只會查詢單庫單表
      * @param tid
      * @param weekOfYear
      * @return
@@ -64,8 +85,14 @@ public class TodoController {
     public ResponseEntity getList(
             @NotBlank @RequestParam @DateTimeFormat(pattern = Constant.DATETIME_FORMAT) Date startTime,
             @NotBlank @RequestParam(required = false) String seq,
-            @NotBlank @RequestParam Integer limit
+            @NotBlank @RequestParam Integer limit,
+            @NotBlank @RequestParam(required = false) boolean improve
     ) {
+        // TODO 視情況而從不同的來源獲取 list (todoService, historyListService)
+        if (improve) {
+            return ResponseResult.successGet(historyListService.getList(startTime, seq, limit));
+        }
+
         return ResponseResult.successGet(todoService.getList(startTime, seq, limit));
     }
 

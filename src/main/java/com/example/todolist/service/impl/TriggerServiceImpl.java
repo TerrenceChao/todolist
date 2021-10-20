@@ -47,32 +47,24 @@ public class TriggerServiceImpl implements TriggerService {
 
     private long max;
 
-    private long max1024Times;
-
     public TriggerServiceImpl(RedissonClient redisson, RabbitTemplate rabbitTemplate, ByteUtil byteUtil, Environment env) {
         this.redisson = redisson;
         this.rabbitTemplate = rabbitTemplate;
         this.byteUtil = byteUtil;
 
         max = Long.parseLong(Objects.requireNonNullElse(env.getProperty("todo-task.max"), "20"));
-        max1024Times = Math.min(max << 10, 1_000_000);
     }
 
     @Override
     public void transformAsync(Long timestamp) {
         // TODO 用 Redisson 是否過慢!?
         RAtomicLong taskCnt = redisson.getAtomicLong(taskCountKey);
-        long currentTaskCnt = taskCnt.addAndGet(1L);
-        if (currentTaskCnt % max == 1) {
+        if (taskCnt.addAndGet(1L) % max == 1) {
             // previousTime = firstTimestamp of last round
             RAtomicLong previousTime = redisson.getAtomicLong(taskFirstTimestampKey);
             sendMessage(previousTime.get());
             // timestamp = firstTimestamp of current round
             previousTime.set(timestamp);
-        }
-
-        if (currentTaskCnt % max1024Times == 0) {
-            taskCnt.addAndGet(0);
         }
     }
 

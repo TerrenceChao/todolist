@@ -10,21 +10,20 @@ import com.example.todolist.model.vo.TodoListVo;
 import com.example.todolist.model.vo.TodoTaskVo;
 import com.example.todolist.service.HistoryListService;
 import com.example.todolist.util.DatetimeUtil;
-import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+//import org.apache.shardingsphere.transaction.annotation.ShardingTransactionType;
+//import org.apache.shardingsphere.transaction.core.TransactionType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
 @Slf4j
 @Service
-@AllArgsConstructor
 public class HistoryListServiceImpl implements HistoryListService {
-
-    @Autowired
-    private Environment env;
 
     @Autowired
     private TodoListRepository todoListRepo;
@@ -35,11 +34,37 @@ public class HistoryListServiceImpl implements HistoryListService {
     @Autowired
     private DatetimeUtil dateUtil;
 
+    private int min;
+
+    private int max;
+
+    private int contentPrefixLen;
+
+    public HistoryListServiceImpl(
+            TodoListRepository todoListRepo,
+            TodoTaskRepository taskRepo,
+            DatetimeUtil dateUtil,
+            Environment env) {
+        this.todoListRepo = todoListRepo;
+        this.taskRepo = taskRepo;
+        this.dateUtil = dateUtil;
+
+        String minStr = Objects.requireNonNullElse(env.getProperty("todo-task.min"), "10");
+        min = Integer.parseInt(minStr);
+
+        String maxStr = Objects.requireNonNullElse(env.getProperty("todo-task.max"), "100");
+        max = Integer.parseInt(maxStr);
+
+        contentPrefixLen = Integer.parseInt(Objects.requireNonNullElse(env.getProperty("todo-task.content.preview-length"), "10"));
+    }
+
     /**
      * TODO 補償機制 由外部 scheduler 觸發
      * @param limit
      * @return
      */
+    @Transactional(isolation = Isolation.SERIALIZABLE, rollbackFor = Exception.class)
+//    @ShardingTransactionType(TransactionType.LOCAL)
     @Override
     public BatchVo transform(Integer limit) {
         if (lessThanMin(limit) || exceedMaxLimit(limit)) {
@@ -47,23 +72,33 @@ public class HistoryListServiceImpl implements HistoryListService {
             return new BatchVo(limit);
         }
 
+        int limitPlusOne = limit + 1;
+        List<TodoTask> tasks;
+
         TodoList latestOne = todoListRepo.getLatestOne();
         if (Objects.isNull(latestOne)) {
-            int limitPlusOne = limit + 1;
-            List<TodoTask> tasks = taskRepo.getList(limitPlusOne);
+            tasks = taskRepo.getList(limitPlusOne);
             if (tasks.size() < limitPlusOne) {
                 log.warn("The todo-tasks amount is not enough.  limit: {}", limit);
                 // TODO define exception
                 return new BatchVo(limit);
             }
-
-            return insertAndMerge(tasks, limit);
+        } else {
+            Long latestLid = latestOne.getNextLid();
+            tasks = taskRepo.getList(latestLid, limitPlusOne);
+            if (tasks.size() < limitPlusOne) {
+                log.warn("The todo-tasks amount is not enough.  limit: {} latestLid: {}", limit, latestLid);
+                // TODO define exception
+                return new BatchVo(limit);
+            }
         }
 
-        Long latestLid = latestOne.getNextLid();
-        return transform(String.valueOf(latestLid), limit);
+        return insertAndMerge(tasks, limit);
     }
 
+
+    @Transactional(isolation = Isolation.SERIALIZABLE, rollbackFor = Exception.class)
+//    @ShardingTransactionType(TransactionType.LOCAL)
     @Override
     public BatchVo transform(Date startTime, Integer limit) {
         if (lessThanMin(limit) || exceedMaxLimit(limit)) {
@@ -71,23 +106,31 @@ public class HistoryListServiceImpl implements HistoryListService {
             return new BatchVo(limit);
         }
 
+        int limitPlusOne = limit + 1;
+        List<TodoTask> tasks;
+
         Integer month = dateUtil.getMonth(startTime);
         Integer weekOfYear = dateUtil.getWeekOfYear(startTime);
         TodoList latestOne = todoListRepo.getLatestOne(startTime, month, weekOfYear);
         if (Objects.isNull(latestOne)) {
-            int limitPlusOne = limit + 1;
-            List<TodoTask> tasks = taskRepo.getList(startTime, limitPlusOne);
+            tasks = taskRepo.getList(startTime, limitPlusOne);
             if (tasks.size() < limitPlusOne) {
                 log.warn("The todo-tasks amount is not enough.  limit: {}", limit);
                 // TODO define exception
                 return new BatchVo(limit);
             }
 
-            return insertAndMerge(tasks, limit);
+        } else {
+            Long latestLid = latestOne.getNextLid();
+            tasks = taskRepo.getList(latestLid, limitPlusOne);
+            if (tasks.size() < limitPlusOne) {
+                log.warn("The todo-tasks amount is not enough.  limit: {} latestLid: {}", limit, latestLid);
+                // TODO define exception
+                return new BatchVo(limit);
+            }
         }
 
-        Long latestLid = latestOne.getNextLid();
-        return transform(String.valueOf(latestLid), limit);
+        return insertAndMerge(tasks, limit);
     }
 
     /**
@@ -104,7 +147,7 @@ public class HistoryListServiceImpl implements HistoryListService {
 
         log.info("transformation.  limit: {} tid: {}", limit, tid);
         int limitPlusOne = limit + 1;
-        List<TodoTask> tasks = taskRepo.getList(Long.valueOf(tid), limitPlusOne);
+        List<TodoTask> tasks = taskRepo.getList(Long.parseLong(tid), limitPlusOne);
         if (tasks.size() < limitPlusOne) {
             log.warn("The todo-tasks amount is not enough.  limit: {} tid: {}", limit, tid);
             // TODO define exception
@@ -140,7 +183,7 @@ public class HistoryListServiceImpl implements HistoryListService {
                     startTime,
                     month,
                     weekOfYear,
-                    Long.valueOf(tid),
+                    Long.parseLong(tid),
                     2
             );
         }
@@ -175,14 +218,12 @@ public class HistoryListServiceImpl implements HistoryListService {
     }
 
     private boolean lessThanMin(Integer limit) {
-        String min = Objects.requireNonNullElse(env.getProperty("todo-task.min"), "10");
-        return limit < Integer.parseInt(min);
+        return limit < min;
     }
     
     private BatchVo insertAndMerge(List<TodoTask> tasks, Integer limit) {
         TodoTask firstTask = tasks.get(0);
         int firstMonth = dateUtil.getMonth(firstTask.getCreatedAt());
-        int contentPrefixLen = Integer.parseInt(Objects.requireNonNullElse(env.getProperty("todo-task.content.preview-length"), "10"));
         TodoList todoList = generateTodoList(tasks, firstMonth, contentPrefixLen);
         todoListRepo.insert(todoList);
 
@@ -221,8 +262,7 @@ public class HistoryListServiceImpl implements HistoryListService {
     }
 
     private boolean exceedMaxLimit(Integer limit) {
-        String max = Objects.requireNonNullElse(env.getProperty("todo-task.max"), "100");
-        return Integer.parseInt(max) < limit;
+        return max < limit;
     }
 
     private List<TodoListVo> toTodoListVos(List<TodoList> TodoListCollect) {

@@ -19,9 +19,10 @@
         <mysql-connector.version>8.0.19</mysql-connector.version>
         <mybatisplus.version>2.3</mybatisplus.version>
         <mybatis-spring-boot-starter.version>2.1.4</mybatis-spring-boot-starter.version>
-        <sharding-jdbc-spring-boot-starter.version>4.0.0-RC1</sharding-jdbc-spring-boot-starter.version>
+        <shardingsphere.version>4.1.1</shardingsphere.version>
         <mybatis-plus-boot-starter.version>3.0.5</mybatis-plus-boot-starter.version>
-        <druid-spring-boot-starter.version>1.1.20</druid-spring-boot-starter.version>
+        <mybatis-plus.version>3.4.0</mybatis-plus.version>
+        <druid.version>1.2.1</druid.version>
         <spring-cloud-gcp.version>2.0.3</spring-cloud-gcp.version>
         <spring-cloud.version>2020.0.3</spring-cloud.version>
     </properties>
@@ -60,6 +61,13 @@
             <artifactId>mybatis-plus-boot-starter</artifactId>
             <version>${mybatis-plus-boot-starter.version}</version>
         </dependency>
+        <!--mybatis-plus 碼生成器 新增 模板引擎依賴 這個需要增加模板引擎依賴，如freemarker-->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-generator</artifactId>
+            <version>${mybatis-plus.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-generate</artifactId>
@@ -72,14 +80,29 @@
         </dependency>
         <dependency>
             <groupId>com.alibaba</groupId>
-            <artifactId>druid-spring-boot-starter</artifactId>
-            <version>${druid-spring-boot-starter.version}</version>
+            <artifactId>druid</artifactId>
+            <version>${druid.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.shardingsphere</groupId>
             <artifactId>sharding-jdbc-spring-boot-starter</artifactId>
-            <version>${sharding-jdbc-spring-boot-starter.version}</version>
+            <version>${shardingsphere.version}</version>
         </dependency>
+<!--        &lt;!&ndash; 使用XA事务时，需要引入此模块 &ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>org.apache.shardingsphere</groupId>-->
+<!--            <artifactId>sharding-transaction-xa-core</artifactId>-->
+<!--            <version>${shardingsphere.version}</version>-->
+<!--        </dependency>-->
+
+<!--        &lt;!&ndash; 使用BASE事务时，需要引入此模块 &ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>org.apache.shardingsphere</groupId>-->
+<!--            <artifactId>sharding-transaction-base-seata-at</artifactId>-->
+<!--            <version>${shardingsphere.version}</version>-->
+<!--        </dependency>-->
+
+
 
 <!--        <dependency>-->
 <!--            <groupId>org.flywaydb</groupId>-->

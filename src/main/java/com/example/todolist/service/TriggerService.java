@@ -4,6 +4,8 @@ public interface TriggerService {
 
     void transformAsync(Long timestamp);
 
+    long transform(Long timestamp);
+
     /**
      * todo-list 最後一行的 next_created_at
      * @return

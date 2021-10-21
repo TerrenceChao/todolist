@@ -1,6 +1,6 @@
 package com.example.todolist.service;
 
-import com.example.todolist.service.impl.TriggerServiceImpl;
+import com.example.todolist.service.impl.TriggerServiceImplA;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
@@ -21,7 +21,7 @@ public class RedissonTransformTest {
     private RedissonClient redissonClient;
 
     @Autowired
-    private TriggerServiceImpl triggerService;
+    private TriggerServiceImplA triggerService;
 
     @Before
     public void beforeTest() {

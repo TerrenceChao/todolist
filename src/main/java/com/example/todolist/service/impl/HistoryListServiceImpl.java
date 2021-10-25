@@ -1,6 +1,7 @@
 package com.example.todolist.service.impl;
 
 import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.example.todolist.common.ResponseCode;
 import com.example.todolist.common.exception.CreationException;
 import com.example.todolist.common.exception.ReqFormatException;
@@ -76,8 +77,7 @@ public class HistoryListServiceImpl implements HistoryListService {
             throw new ReqFormatException("limit is out of range");
         }
 
-        int limitPlusOne = limit + 1;
-        List<TodoTask> tasks;
+
         TodoList latestOne;
         try {
             latestOne = todoListRepo.getLatestOne();
@@ -86,25 +86,27 @@ public class HistoryListServiceImpl implements HistoryListService {
             throw new SearchException(ResponseCode.TODOLIST_SEARCH_ERROR);
         }
 
+
+        int limitPlusOne = limit + 1;
+        Long latestLid = null;
+        List<TodoTask> tasks;
         try {
             if (Objects.isNull(latestOne)) {
                 tasks = taskRepo.getList(limitPlusOne);
-                if (tasks.size() < limitPlusOne) {
-                    log.warn("The todo-tasks amount is not enough.  limit: {}", limit);
-                    return new BatchVo(limit);
-                }
             } else {
-                Long latestLid = latestOne.getNextLid();
+                latestLid = latestOne.getNextLid();
                 tasks = taskRepo.getList(latestLid, limitPlusOne);
-                if (tasks.size() < limitPlusOne) {
-                    log.warn("The todo-tasks amount is not enough.  limit: {} latestLid: {}", limit, latestLid);
-                    return new BatchVo(limit);
-                }
             }
         } catch (Exception e) {
             log.error("todo-task search error", e.getStackTrace());
             throw new SearchException(ResponseCode.TASK_SEARCH_ERROR);
         }
+
+        if (tasks.size() < limitPlusOne) {
+            log.warn("The todo-tasks amount is not enough.  limit: {} latestLid: {}", limit, latestLid);
+            return new BatchVo(limit);
+        }
+
 
         TodoList todoList = generateTodoList(tasks, contentPrefixLen, dateUtil);
         try {
@@ -126,8 +128,6 @@ public class HistoryListServiceImpl implements HistoryListService {
             throw new ReqFormatException("limit is out of range");
         }
 
-        int limitPlusOne = limit + 1;
-        List<TodoTask> tasks;
 
         Integer month = dateUtil.getMonth(startTime);
         Integer weekOfYear = dateUtil.getWeekOfYear(startTime);
@@ -139,26 +139,27 @@ public class HistoryListServiceImpl implements HistoryListService {
             throw new SearchException(ResponseCode.TODOLIST_SEARCH_ERROR);
         }
 
+
+        int limitPlusOne = limit + 1;
+        Long latestLid = null;
+        List<TodoTask> tasks;
         try {
             if (Objects.isNull(latestOne)) {
                 tasks = taskRepo.getList(startTime, limitPlusOne);
-                if (tasks.size() < limitPlusOne) {
-                    log.warn("The todo-tasks amount is not enough.  limit: {}", limit);
-                    return new BatchVo(limit);
-                }
-
             } else {
-                Long latestLid = latestOne.getNextLid();
+                latestLid = latestOne.getNextLid();
                 tasks = taskRepo.getList(latestLid, limitPlusOne);
-                if (tasks.size() < limitPlusOne) {
-                    log.warn("The todo-tasks amount is not enough.  limit: {} latestLid: {}", limit, latestLid);
-                    return new BatchVo(limit);
-                }
             }
         } catch (Exception e) {
             log.error("todo-task search error", e.getStackTrace());
             throw new SearchException(ResponseCode.TASK_SEARCH_ERROR);
         }
+
+        if (tasks.size() < limitPlusOne) {
+            log.warn("The todo-tasks amount is not enough.  limit: {} latestLid: {}", limit, latestLid);
+            return new BatchVo(limit);
+        }
+
 
         TodoList todoList = generateTodoList(tasks, contentPrefixLen, dateUtil);
         try {
@@ -182,19 +183,22 @@ public class HistoryListServiceImpl implements HistoryListService {
             throw new ReqFormatException("limit is out of range");
         }
 
+
         log.info("transformation.  limit: {} tid: {}", limit, tid);
         int limitPlusOne = limit + 1;
         List<TodoTask> tasks;
         try {
             tasks = taskRepo.getList(Long.parseLong(tid), limitPlusOne);
-            if (tasks.size() < limitPlusOne) {
-                log.warn("The todo-tasks amount is not enough.  limit: {} tid: {}", limit, tid);
-                return new BatchVo(limit);
-            }
         } catch (Exception e) {
             log.error("todo-task search error", e.getStackTrace());
             throw new SearchException(ResponseCode.TASK_SEARCH_ERROR);
         }
+
+        if (tasks.size() < limitPlusOne) {
+            log.warn("The todo-tasks amount is not enough.  limit: {} tid: {}", limit, tid);
+            return new BatchVo(limit);
+        }
+
 
         TodoList todoList = generateTodoList(tasks, contentPrefixLen, dateUtil);
         try {
@@ -250,22 +254,11 @@ public class HistoryListServiceImpl implements HistoryListService {
         List<TodoTaskVo> taskVos = mergeTodoTaskVos(todoListVos);
         taskVos = filterTodoTaskVos(taskVos, startTime, tid, limit + 1);
 
-        int lastOne = taskVos.size() - 1;
-        if (lastOne <= limit - 1) {
-            return new BatchVo(
-                    taskVos,
-                    limit,
-                    taskVos.size(),
-                    null
-            );
-        }
-
-        TodoTaskVo lastVo = taskVos.remove(lastOne);
         return new BatchVo(
                 taskVos,
                 limit,
                 taskVos.size(),
-                lastVo.toNext()
+                getNextTask(taskVos, limit)
         );
     }
 
@@ -351,6 +344,11 @@ public class HistoryListServiceImpl implements HistoryListService {
 
         int endIdx = Math.min(taskVos.size(), startIdx + limit);
         return taskVos.subList(startIdx, endIdx);
+    }
+
+    private JSONObject getNextTask(List<TodoTaskVo> taskVos, int limit) {
+        int lastOne = taskVos.size() - 1;
+        return (lastOne <= limit - 1) ? null : taskVos.remove(lastOne).toNext();
     }
 
     /**

@@ -43,14 +43,15 @@ public class TodoController {
      * step 1. create one task in DB
      * step 2. uploading attachments (async + message queue)
      * step 3. according condition and do transformation (async + message queue)
+     *
      * @param title
      * @param content
      * @param files
      * @return
      * @throws IOException
      */
-    @PostMapping(value = "/tasks", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
-    public ResponseEntity create(@RequestPart("title") String title, @RequestPart("content") String content, @RequestPart(value = "files", required = false) List<MultipartFile> files) throws IOException {
+    @PostMapping(value = "/tasks", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+    public ResponseEntity create(@RequestPart("title") String title, @RequestPart("content") String content, @RequestPart(value = "files", required = false) List<MultipartFile> files) throws Exception {
         // step 1
         TodoTaskVo taskVo = todoService.create(title, content, files);
         Long tid = taskVo.getTid();
@@ -71,6 +72,7 @@ public class TodoController {
     /**
      * 單庫透過 week_of_year 做分表, 所以除了 tid(PK) 以外，再透過 week_of_year
      * 針對特定 partition 查詢，如此只會查詢單庫單表
+     *
      * @param tid
      * @param weekOfYear
      * @return
@@ -83,8 +85,9 @@ public class TodoController {
     /**
      * 讀取近期的 list 從 todoService (TodoTask)
      * 讀取歷史的 list 從 historyListService (1筆 TodoList 包含 K 筆 TodoTask)
+     *
      * @param startTime
-     * @param seq (not required) if null, get the min seq of the time
+     * @param seq       (not required) if null, get the min seq of the time
      * @param limit
      * @return
      */
@@ -104,6 +107,7 @@ public class TodoController {
     /**
      * 讀取近期的 list 從 todoService (TodoTask)
      * 讀取歷史的 list 從 historyListService (1筆 TodoList 包含 K 筆 TodoTask)
+     *
      * @param startTimestamp
      * @param limit
      * @param seq

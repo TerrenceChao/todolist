@@ -1,6 +1,11 @@
 package com.example.todolist.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
+import com.example.todolist.common.ResponseCode;
+import com.example.todolist.common.exception.CreationException;
+import com.example.todolist.common.exception.ReqFormatException;
+import com.example.todolist.common.exception.ReqNotFoundException;
+import com.example.todolist.common.exception.SearchException;
 import com.example.todolist.db.rmdb.entity.TodoTask;
 import com.example.todolist.db.rmdb.repo.TodoTaskRepository;
 import com.example.todolist.model.bo.TodoTaskBo;
@@ -12,6 +17,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -21,7 +27,6 @@ import java.util.*;
 
 @Slf4j
 @Service
-@AllArgsConstructor
 public class TodoServiceImpl implements TodoService {
 
     @Autowired
@@ -29,6 +34,21 @@ public class TodoServiceImpl implements TodoService {
 
     @Autowired
     private TodoTaskRepository taskRepo;
+
+    private int min;
+
+    private int max;
+
+    public TodoServiceImpl(DatetimeUtil dateUtil, TodoTaskRepository taskRepo, Environment env) {
+        this.dateUtil = dateUtil;
+        this.taskRepo = taskRepo;
+
+        String minStr = Objects.requireNonNullElse(env.getProperty("todo-task.min"), "10");
+        min = Integer.parseInt(minStr);
+
+        String maxStr = Objects.requireNonNullElse(env.getProperty("todo-task.max"), "100");
+        max = Integer.parseInt(maxStr);
+    }
 
     @Override
     public TodoTaskVo create(String title, String content, List<MultipartFile> files) throws IOException {
@@ -39,13 +59,18 @@ public class TodoServiceImpl implements TodoService {
         Integer weekOfYear = dateUtil.getWeekOfYear(now);
 
         TodoTask newTask;
-        newTask = taskRepo.insert(
-                todoTaskBo.getTitle(),
-                todoTaskBo.getContent(),
-                Objects.nonNull(attachments)? attachments.toJSONString() : null,
-                weekOfYear,
-                now
-        );
+        try {
+            newTask = taskRepo.insert(
+                    todoTaskBo.getTitle(),
+                    todoTaskBo.getContent(),
+                    Objects.nonNull(attachments) ? attachments.toJSONString() : null,
+                    weekOfYear,
+                    now
+            );
+        } catch (Exception e) {
+            log.error("task creation error", e.getStackTrace());
+            throw new CreationException(ResponseCode.TASK_CREATION_ERROR);
+        }
 
         log.info("create a task. task: {}", newTask);
 
@@ -54,23 +79,31 @@ public class TodoServiceImpl implements TodoService {
 
     /**
      * @param startTime
-     * @param tid tid
+     * @param tid
      * @param limit
      * @return
      */
     @Override
     public BatchVo getList(Date startTime, String tid, Integer limit) {
+        if (lessThanMin(limit) || exceedMaxLimit(limit)) {
+            throw new ReqFormatException("limit is out of range");
+        }
 
         List<TodoTask> tasks;
-        if (Objects.isNull(tid)) {
-            log.info("hot search by time.  limit: {} startTime: {}", limit, startTime);
-            tasks = taskRepo.getList(startTime, limit + 1);
-        } else {
-            log.info("hot search with time + tid.  limit: {} startTime: {} tid: {}", limit, startTime, tid);
-            tasks = taskRepo.getList(
-                    startTime,
-                    Long.parseLong(tid),
-                    limit + 1);
+        try {
+            if (Objects.isNull(tid)) {
+                log.info("hot search by time.  limit: {} startTime: {}", limit, startTime);
+                tasks = taskRepo.getList(startTime, limit + 1);
+            } else {
+                log.info("hot search with time + tid.  limit: {} startTime: {} tid: {}", limit, startTime, tid);
+                tasks = taskRepo.getList(
+                        startTime,
+                        Long.parseLong(tid),
+                        limit + 1);
+            }
+        } catch (Exception e) {
+            log.error("task search error", e.getStackTrace());
+            throw new SearchException(ResponseCode.TASK_SEARCH_ERROR);
         }
 
         if (tasks.isEmpty()) {
@@ -95,28 +128,34 @@ public class TodoServiceImpl implements TodoService {
                 limit,
                 taskVos.size(),
                 lastTaskVo.toNext()
-            );
+        );
     }
 
     /**
-     * @param tid PK
+     * @param tid          PK
      * @param partitionKey weekOfYear
      * @return
      */
     @Override
     public TodoTaskVo getOne(Long tid, Integer partitionKey) {
         TodoTask task;
-        if (Objects.isNull(partitionKey)) {
-            log.info("get a task.  tid: {}", tid);
-            task = taskRepo.findByTid(tid);
-        } else {
-            log.info("get a task with 'partition key'.  tid: {}  weekOfYear: {}", tid, partitionKey);
-            task = taskRepo.findOne(tid, partitionKey);
+        try {
+            if (Objects.isNull(partitionKey)) {
+                log.info("get a task.  tid: {}", tid);
+                task = taskRepo.findByTid(tid);
+            } else {
+                log.info("get a task with 'partition key'.  tid: {}  weekOfYear: {}", tid, partitionKey);
+                task = taskRepo.findOne(tid, partitionKey);
+            }
+
+        } catch (Exception e) {
+            log.error("task search error", e.getStackTrace());
+            throw new SearchException(ResponseCode.TASK_SEARCH_ERROR);
         }
-//        TODO def exception
-//        if (Objects.isNull(task)) {
-//            throw new Exception("");
-//        }
+
+        if (Objects.isNull(task)) {
+            throw new ReqNotFoundException(ResponseCode.TASK_NOT_FOUND, " tid: " + tid + " weekOfYear: " + partitionKey);
+        }
 
         return new TodoTaskVo(tid, task);
     }
@@ -131,6 +170,7 @@ public class TodoServiceImpl implements TodoService {
      * 暫時不實現
      * TODO 附件暫時不允許更新
      * TODO 需更新 TodoList 中的資料 (rabbitmq)
+     *
      * @param tid
      * @param todoTask
      */
@@ -143,7 +183,8 @@ public class TodoServiceImpl implements TodoService {
      * 暫時不實現
      * TODO 先軟刪除，需更新 TodoList 中的資料 (rabbitmq);
      * TODO 等過期一段時間後再透過 job batch 刪除 (google drive 的刪除也是在垃圾桶待上 30 天以後才真的刪除。)
-     *  >> 過期一段時間後再 ... 長期不實現
+     * >> 過期一段時間後再 ... 長期不實現
+     *
      * @param tid
      */
     @Override
@@ -151,12 +192,20 @@ public class TodoServiceImpl implements TodoService {
 
     }
 
+    private boolean lessThanMin(Integer limit) {
+        return limit < min;
+    }
+
+    private boolean exceedMaxLimit(Integer limit) {
+        return max < limit;
+    }
+
     protected TodoTaskBo parseInput(String title, String content, List<MultipartFile> files) throws IOException {
         TodoTaskBo taskBo = new TodoTaskBo()
                 .setTitle(title)
                 .setContent(content);
 
-        if (Objects.nonNull(files) && ! files.isEmpty()) {
+        if (Objects.nonNull(files) && !files.isEmpty()) {
             JSONObject attachments = toAttachments(files);
             taskBo.setAttachments(attachments);
         }

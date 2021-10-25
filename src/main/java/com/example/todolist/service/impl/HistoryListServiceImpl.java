@@ -1,6 +1,10 @@
 package com.example.todolist.service.impl;
 
 import com.alibaba.fastjson.JSONArray;
+import com.example.todolist.common.ResponseCode;
+import com.example.todolist.common.exception.CreationException;
+import com.example.todolist.common.exception.ReqFormatException;
+import com.example.todolist.common.exception.SearchException;
 import com.example.todolist.db.rmdb.entity.TodoList;
 import com.example.todolist.db.rmdb.entity.TodoTask;
 import com.example.todolist.db.rmdb.repo.TodoListRepository;
@@ -60,6 +64,7 @@ public class HistoryListServiceImpl implements HistoryListService {
 
     /**
      * TODO 補償機制 由外部 scheduler 觸發
+     *
      * @param limit
      * @return
      */
@@ -68,32 +73,48 @@ public class HistoryListServiceImpl implements HistoryListService {
     @Override
     public BatchVo transform(Integer limit) {
         if (lessThanMin(limit) || exceedMaxLimit(limit)) {
-            // TODO define exception
-            return new BatchVo(limit);
+            throw new ReqFormatException("limit is out of range");
         }
 
         int limitPlusOne = limit + 1;
         List<TodoTask> tasks;
-
-        TodoList latestOne = todoListRepo.getLatestOne();
-        if (Objects.isNull(latestOne)) {
-            tasks = taskRepo.getList(limitPlusOne);
-            if (tasks.size() < limitPlusOne) {
-                log.warn("The todo-tasks amount is not enough.  limit: {}", limit);
-                // TODO define exception
-                return new BatchVo(limit);
-            }
-        } else {
-            Long latestLid = latestOne.getNextLid();
-            tasks = taskRepo.getList(latestLid, limitPlusOne);
-            if (tasks.size() < limitPlusOne) {
-                log.warn("The todo-tasks amount is not enough.  limit: {} latestLid: {}", limit, latestLid);
-                // TODO define exception
-                return new BatchVo(limit);
-            }
+        TodoList latestOne;
+        try {
+            latestOne = todoListRepo.getLatestOne();
+        } catch (Exception e) {
+            log.error("todo-list search error", e.getStackTrace());
+            throw new SearchException(ResponseCode.TODOLIST_SEARCH_ERROR);
         }
 
-        return insertAndMerge(tasks, limit);
+        try {
+            if (Objects.isNull(latestOne)) {
+                tasks = taskRepo.getList(limitPlusOne);
+                if (tasks.size() < limitPlusOne) {
+                    log.warn("The todo-tasks amount is not enough.  limit: {}", limit);
+                    return new BatchVo(limit);
+                }
+            } else {
+                Long latestLid = latestOne.getNextLid();
+                tasks = taskRepo.getList(latestLid, limitPlusOne);
+                if (tasks.size() < limitPlusOne) {
+                    log.warn("The todo-tasks amount is not enough.  limit: {} latestLid: {}", limit, latestLid);
+                    return new BatchVo(limit);
+                }
+            }
+        } catch (Exception e) {
+            log.error("todo-task search error", e.getStackTrace());
+            throw new SearchException(ResponseCode.TASK_SEARCH_ERROR);
+        }
+
+        TodoList todoList = generateTodoList(tasks, contentPrefixLen, dateUtil);
+        try {
+            todoListRepo.insert(todoList);
+        } catch (Exception e) {
+            log.error("todo-list creation error", e.getStackTrace());
+            throw new CreationException(ResponseCode.TODOLIST_CREATION_ERROR);
+        }
+
+        return toBatch(todoList, limit);
     }
 
 
@@ -102,8 +123,7 @@ public class HistoryListServiceImpl implements HistoryListService {
     @Override
     public BatchVo transform(Date startTime, Integer limit) {
         if (lessThanMin(limit) || exceedMaxLimit(limit)) {
-            // TODO define exception
-            return new BatchVo(limit);
+            throw new ReqFormatException("limit is out of range");
         }
 
         int limitPlusOne = limit + 1;
@@ -111,50 +131,80 @@ public class HistoryListServiceImpl implements HistoryListService {
 
         Integer month = dateUtil.getMonth(startTime);
         Integer weekOfYear = dateUtil.getWeekOfYear(startTime);
-        TodoList latestOne = todoListRepo.getLatestOne(startTime, month, weekOfYear);
-        if (Objects.isNull(latestOne)) {
-            tasks = taskRepo.getList(startTime, limitPlusOne);
-            if (tasks.size() < limitPlusOne) {
-                log.warn("The todo-tasks amount is not enough.  limit: {}", limit);
-                // TODO define exception
-                return new BatchVo(limit);
-            }
-
-        } else {
-            Long latestLid = latestOne.getNextLid();
-            tasks = taskRepo.getList(latestLid, limitPlusOne);
-            if (tasks.size() < limitPlusOne) {
-                log.warn("The todo-tasks amount is not enough.  limit: {} latestLid: {}", limit, latestLid);
-                // TODO define exception
-                return new BatchVo(limit);
-            }
+        TodoList latestOne;
+        try {
+            latestOne = todoListRepo.getLatestOne(startTime, month, weekOfYear);
+        } catch (Exception e) {
+            log.error("todo-list search error", e.getStackTrace());
+            throw new SearchException(ResponseCode.TODOLIST_SEARCH_ERROR);
         }
 
-        return insertAndMerge(tasks, limit);
+        try {
+            if (Objects.isNull(latestOne)) {
+                tasks = taskRepo.getList(startTime, limitPlusOne);
+                if (tasks.size() < limitPlusOne) {
+                    log.warn("The todo-tasks amount is not enough.  limit: {}", limit);
+                    return new BatchVo(limit);
+                }
+
+            } else {
+                Long latestLid = latestOne.getNextLid();
+                tasks = taskRepo.getList(latestLid, limitPlusOne);
+                if (tasks.size() < limitPlusOne) {
+                    log.warn("The todo-tasks amount is not enough.  limit: {} latestLid: {}", limit, latestLid);
+                    return new BatchVo(limit);
+                }
+            }
+        } catch (Exception e) {
+            log.error("todo-task search error", e.getStackTrace());
+            throw new SearchException(ResponseCode.TASK_SEARCH_ERROR);
+        }
+
+        TodoList todoList = generateTodoList(tasks, contentPrefixLen, dateUtil);
+        try {
+            todoListRepo.insert(todoList);
+        } catch (Exception e) {
+            log.error("todo-list creation error", e.getStackTrace());
+            throw new CreationException(ResponseCode.TODOLIST_CREATION_ERROR);
+        }
+
+        return toBatch(todoList, limit);
     }
 
     /**
-     * @param tid todo_task: tid
+     * @param tid   todo_task: tid
      * @param limit 限制為 10 的倍數
      * @return
      */
     @Override
     public BatchVo transform(String tid, Integer limit) {
         if (lessThanMin(limit) || exceedMaxLimit(limit)) {
-            // TODO define exception
-            return new BatchVo(limit);
+            throw new ReqFormatException("limit is out of range");
         }
 
         log.info("transformation.  limit: {} tid: {}", limit, tid);
         int limitPlusOne = limit + 1;
-        List<TodoTask> tasks = taskRepo.getList(Long.parseLong(tid), limitPlusOne);
-        if (tasks.size() < limitPlusOne) {
-            log.warn("The todo-tasks amount is not enough.  limit: {} tid: {}", limit, tid);
-            // TODO define exception
-            return new BatchVo(limit);
+        List<TodoTask> tasks;
+        try {
+            tasks = taskRepo.getList(Long.parseLong(tid), limitPlusOne);
+            if (tasks.size() < limitPlusOne) {
+                log.warn("The todo-tasks amount is not enough.  limit: {} tid: {}", limit, tid);
+                return new BatchVo(limit);
+            }
+        } catch (Exception e) {
+            log.error("todo-task search error", e.getStackTrace());
+            throw new SearchException(ResponseCode.TASK_SEARCH_ERROR);
         }
 
-        return insertAndMerge(tasks, limit);
+        TodoList todoList = generateTodoList(tasks, contentPrefixLen, dateUtil);
+        try {
+            todoListRepo.insert(todoList);
+        } catch (Exception e) {
+            log.error("todo-list creation error", e.getStackTrace());
+            throw new CreationException(ResponseCode.TODOLIST_CREATION_ERROR);
+        }
+
+        return toBatch(todoList, limit);
     }
 
     /**
@@ -166,31 +216,33 @@ public class HistoryListServiceImpl implements HistoryListService {
     @Override
     public BatchVo getList(Date startTime, String tid, Integer limit) {
         if (exceedMaxLimit(limit)) {
-            // TODO define exception
-            return new BatchVo(limit);
+            throw new ReqFormatException("limit is out of range");
         }
 
         Integer month = dateUtil.getMonth(startTime);
         Integer weekOfYear = dateUtil.getWeekOfYear(startTime);
-
         List<TodoList> todoListCollect;
-        if (Objects.isNull(tid)) {
-            log.info("[history] search by time.  limit: {} startTime: {}", limit, startTime);
-            todoListCollect = todoListRepo.getBatchTodoList(startTime, month, weekOfYear, 2);
-        } else {
-            log.info("[history] search with time + tid.  limit: {} startTime: {} tid: {}", limit, startTime, tid);
-            todoListCollect = todoListRepo.getBatchTodoList(
-                    startTime,
-                    month,
-                    weekOfYear,
-                    Long.parseLong(tid),
-                    2
-            );
+        try {
+            if (Objects.isNull(tid)) {
+                log.info("[history] search by time.  limit: {} startTime: {}", limit, startTime);
+                todoListCollect = todoListRepo.getBatchTodoList(startTime, month, weekOfYear, 2);
+            } else {
+                log.info("[history] search with time + tid.  limit: {} startTime: {} tid: {}", limit, startTime, tid);
+                todoListCollect = todoListRepo.getBatchTodoList(
+                        startTime,
+                        month,
+                        weekOfYear,
+                        Long.parseLong(tid),
+                        2
+                );
+            }
+        } catch (Exception e) {
+            log.error("todo-list search error", e.getStackTrace());
+            throw new SearchException(ResponseCode.TODOLIST_SEARCH_ERROR);
         }
 
         if (todoListCollect.isEmpty()) {
             log.warn("[history] search with empty returned.  limit: {} startTime: {} tid: {}", limit, startTime, tid);
-            // TODO define exception
             return new BatchVo(limit);
         }
 
@@ -220,15 +272,12 @@ public class HistoryListServiceImpl implements HistoryListService {
     private boolean lessThanMin(Integer limit) {
         return limit < min;
     }
-    
-    private BatchVo insertAndMerge(List<TodoTask> tasks, Integer limit) {
-        TodoTask firstTask = tasks.get(0);
-        int firstMonth = dateUtil.getMonth(firstTask.getCreatedAt());
-        TodoList todoList = generateTodoList(tasks, firstMonth, contentPrefixLen);
-        todoListRepo.insert(todoList);
 
+    private BatchVo<TodoTaskVo> toBatch(TodoList todoList, int limit) {
         TodoListVo listVo = new TodoListVo(todoList);
-        List<TodoTaskVo> taskVos = mergeTodoTaskVos(new ArrayList(){{ add(listVo); }});
+        List<TodoTaskVo> taskVos = mergeTodoTaskVos(new ArrayList() {{
+            add(listVo);
+        }});
         return new BatchVo(
                 taskVos,
                 limit,
@@ -237,7 +286,7 @@ public class HistoryListServiceImpl implements HistoryListService {
         );
     }
 
-    private TodoList generateTodoList(List<TodoTask> tasks, int firstMonth, int contentPrefixLen) {
+    private TodoList generateTodoList(List<TodoTask> tasks, int contentPrefixLen, DatetimeUtil dateUtil) {
         TodoTask firstTask = tasks.get(0);
 
         // 移除最後一個，當下一批次的第一筆 TodoTask
@@ -253,7 +302,7 @@ public class HistoryListServiceImpl implements HistoryListService {
         return new TodoList(
                 firstTask.getTid(),
                 firstTask.getCreatedAt(),
-                firstMonth,
+                dateUtil.getMonth(firstTask.getCreatedAt()),
                 firstTask.getWeekOfYear(),
                 todoTasks,
                 nextBatchTask.getTid(),
@@ -284,7 +333,6 @@ public class HistoryListServiceImpl implements HistoryListService {
     }
 
     /**
-     *
      * @param taskVos
      * @param startTime
      * @param firstTid
@@ -307,6 +355,7 @@ public class HistoryListServiceImpl implements HistoryListService {
 
     /**
      * Using Binary Search
+     *
      * @param taskVos
      * @param targetTid
      * @return
@@ -314,9 +363,9 @@ public class HistoryListServiceImpl implements HistoryListService {
     private int getStartIdxById(List<TodoTaskVo> taskVos, long targetTid) {
         TodoTaskVo task;
         int srt = 0,
-            end = taskVos.size() - 1,
-            mid,
-            startIdx = 0;
+                end = taskVos.size() - 1,
+                mid,
+                startIdx = 0;
 
         while (srt + 1 < end) {
             mid = srt + (end - srt) / 2;
@@ -341,6 +390,7 @@ public class HistoryListServiceImpl implements HistoryListService {
 
     /**
      * Using Binary Search
+     *
      * @param taskVos
      * @param targetTime
      * @return
@@ -348,9 +398,9 @@ public class HistoryListServiceImpl implements HistoryListService {
     private int getStartIdxByTimestamp(List<TodoTaskVo> taskVos, long targetTime) {
         TodoTaskVo task;
         int srt = 0,
-            end = taskVos.size() - 1,
-            mid,
-            startIdx = 0;
+                end = taskVos.size() - 1,
+                mid,
+                startIdx = 0;
 
         while (srt + 1 < end) {
             mid = srt + (end - srt) / 2;

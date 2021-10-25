@@ -96,7 +96,7 @@ public class AttachServiceImpl implements AttachService {
             message.put("bytes", file.getBytes());
         } catch (IOException e) {
             message = new JSONObject();
-            log.error("file bytes error ", e.getMessage());
+            log.error("file bytes error ", e.getStackTrace());
         }
 
         return message;

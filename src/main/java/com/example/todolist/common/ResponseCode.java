@@ -2,12 +2,18 @@ package com.example.todolist.common;
 
 public enum ResponseCode {
 
-    FAIL_FORMATTER(501, "{}"),
-    SUCCESS(1, "登入成功"),
-    FAIL(400, "無法訪問"),
-    SYSTEM_ERROR(409, "系統異常"),
-    TOEKNUNVALIBLE(405, "TOKEN過期"),
-    NOT_FOUND(404, "此位置不存在"),
+    SUCCESS(1, "success"),
+
+    FORMATTER_ERROR(40000, "format error"),
+    TASK_NOT_FOUND(40401, "todo-task is not found."),
+    TODOLIST_NOT_FOUND(40402, "todo-list is not found. "),
+
+    TASK_CREATION_ERROR(50000, "todo-task creation error"),
+    TASK_SEARCH_ERROR(50001, "todo-task search error"),
+    TODOLIST_CREATION_ERROR(50010, "todo-list creation error"),
+    TODOLIST_SEARCH_ERROR(50011, "todo-list search error"),
+
+    FAIL(99999, "request fail"),
     ;
 
     private int code;

@@ -1,6 +1,7 @@
 package com.example.todolist.service.impl;
 
 import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.example.todolist.common.ResponseCode;
 import com.example.todolist.common.exception.CreationException;
 import com.example.todolist.common.exception.ReqFormatException;
@@ -250,22 +251,11 @@ public class HistoryListServiceImpl implements HistoryListService {
         List<TodoTaskVo> taskVos = mergeTodoTaskVos(todoListVos);
         taskVos = filterTodoTaskVos(taskVos, startTime, tid, limit + 1);
 
-        int lastOne = taskVos.size() - 1;
-        if (lastOne <= limit - 1) {
-            return new BatchVo(
-                    taskVos,
-                    limit,
-                    taskVos.size(),
-                    null
-            );
-        }
-
-        TodoTaskVo lastVo = taskVos.remove(lastOne);
         return new BatchVo(
                 taskVos,
                 limit,
                 taskVos.size(),
-                lastVo.toNext()
+                getNextTask(taskVos, limit)
         );
     }
 
@@ -351,6 +341,11 @@ public class HistoryListServiceImpl implements HistoryListService {
 
         int endIdx = Math.min(taskVos.size(), startIdx + limit);
         return taskVos.subList(startIdx, endIdx);
+    }
+
+    private JSONObject getNextTask(List<TodoTaskVo> taskVos, int limit) {
+        int lastOne = taskVos.size() - 1;
+        return (lastOne <= limit - 1) ? null : taskVos.remove(lastOne).toNext();
     }
 
     /**

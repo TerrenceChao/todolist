@@ -13,7 +13,6 @@ import com.example.todolist.model.vo.BatchVo;
 import com.example.todolist.model.vo.TodoTaskVo;
 import com.example.todolist.service.TodoService;
 import com.example.todolist.util.DatetimeUtil;
-import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -112,22 +111,11 @@ public class TodoServiceImpl implements TodoService {
         }
 
         List<TodoTaskVo> taskVos = toTodoTaskVos(tasks);
-        int lastOne = taskVos.size() - 1;
-        if (lastOne <= limit - 1) {
-            return new BatchVo(
-                    taskVos,
-                    limit,
-                    taskVos.size(),
-                    null
-            );
-        }
-
-        TodoTaskVo lastTaskVo = taskVos.remove(lastOne);
         return new BatchVo(
                 taskVos,
                 limit,
                 taskVos.size(),
-                lastTaskVo.toNext()
+                getNextTask(taskVos, limit)
         );
     }
 
@@ -198,6 +186,11 @@ public class TodoServiceImpl implements TodoService {
 
     private boolean exceedMaxLimit(Integer limit) {
         return max < limit;
+    }
+
+    private JSONObject getNextTask(List<TodoTaskVo> taskVos, int limit) {
+        int lastOne = taskVos.size() - 1;
+        return (lastOne <= limit - 1) ? null : taskVos.remove(lastOne).toNext();
     }
 
     protected TodoTaskBo parseInput(String title, String content, List<MultipartFile> files) throws IOException {

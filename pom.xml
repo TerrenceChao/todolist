@@ -19,7 +19,7 @@
         <mysql-connector.version>8.0.19</mysql-connector.version>
         <mybatisplus.version>2.3</mybatisplus.version>
         <mybatis-spring-boot-starter.version>2.1.4</mybatis-spring-boot-starter.version>
-        <shardingsphere.version>4.0.0-RC1</shardingsphere.version>
+        <shardingsphere.version>4.1.1</shardingsphere.version>
         <mybatis-plus-boot-starter.version>3.0.5</mybatis-plus-boot-starter.version>
         <mybatis-plus.version>3.4.0</mybatis-plus.version>
         <druid.version>1.2.1</druid.version>

@@ -40,33 +40,30 @@ public class CloudStorageConsumer extends BaseConsumer<JSONObject> {
     private AttachmentRepository attachRepo;
 
     @Override
-    protected JSONObject transformMsg(byte[] msgBody) throws Exception {
+    protected JSONObject transformMsg(byte[] msgBody, long deliveryTag) throws Exception {
+        log.info("Uploading Google Cloud Storage > transformMsg deliveryTag: {}", deliveryTag);
         return objectMapper.readValue(msgBody, JSONObject.class);
     }
 
     @Override
-    protected void businessProcess(JSONObject payload) throws Exception {
-        try {
-            log.info("Uploading Google Cloud Storage \ntid: {}, \nfilename: {}, \nhash: {}", payload.getString("tid"), payload.getString("filename"), payload.getString("hash"));
+    protected void businessProcess(JSONObject payload, long deliveryTag) throws Exception {
 
-            String hashcode = payload.getString("hash");
-            String bucket = Objects.requireNonNull(env.getProperty("google.cloud.storage.bucket"));
-            String contentType = payload.getString("contentType");
+        log.info("Uploading Google Cloud Storage > \ntid: {}, \nfilename: {}, \nhash: {}, \ndeliveryTag: {}\n", payload.getString("tid"), payload.getString("filename"), payload.getString("hash"), deliveryTag);
 
-            // uploading
-            BlobId blobId = BlobId.of(bucket, hashcode);
-            BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType(contentType).build();
-            byte[] bytes = payload.getBytes("bytes");
-            Blob blob = storage.create(blobInfo, bytes);
-            String publicUrl = env.getProperty("google.cloud.storage.url") + hashcode;
-            log.info("publicUrl: {}", publicUrl);
+        String hashcode = payload.getString("hash");
+        String bucket = Objects.requireNonNull(env.getProperty("google.cloud.storage.bucket"));
+        String contentType = payload.getString("contentType");
 
-            // save into db
-            attachRepo.insert(hashcode, System.currentTimeMillis());
-        } catch (Exception e) {
-            log.error("Uploading Google Cloud Storage -人為手動確認消費-監聽器監聽消費消息-發生異常：", e.fillInStackTrace());
-            throw e;
-        }
+        // uploading
+        BlobId blobId = BlobId.of(bucket, hashcode);
+        BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType(contentType).build();
+        byte[] bytes = payload.getBytes("bytes");
+        Blob blob = storage.create(blobInfo, bytes);
+        String publicUrl = env.getProperty("google.cloud.storage.url") + hashcode;
+        log.info("Uploading Google Cloud Storage > publicUrl: {}, deliveryTag: {}", publicUrl, deliveryTag);
+
+        // save into db
+        attachRepo.insert(hashcode, System.currentTimeMillis());
     }
 
     @RabbitListener(

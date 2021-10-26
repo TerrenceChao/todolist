@@ -67,7 +67,7 @@ public class TodoController {
         // step 3 >> async + message queue
         triggerService.transformAsync(date.getTime());
 
-        return ResponseResult.successPost(tid);
+        return ResponseResult.successPost(taskVo);
     }
 
 

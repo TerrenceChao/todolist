@@ -1,5 +1,6 @@
 package com.example.todolist.service.impl;
 
+
 import com.example.todolist.service.TriggerService;
 import com.example.todolist.util.ByteUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -8,6 +9,7 @@ import org.redisson.api.RedissonClient;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageBuilder;
 import org.springframework.amqp.core.MessageDeliveryMode;
+import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,6 +18,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import java.util.Objects;
+import java.util.UUID;
 
 
 @Slf4j
@@ -103,18 +106,33 @@ public class TriggerServiceImplA implements TriggerService {
             return;
         }
 
+        String messageId = UUID.randomUUID().toString();
         try {
-            rabbitTemplate.setExchange(mqExchange);
-            rabbitTemplate.setRoutingKey(mqRoutingKey);
-
             Message message = MessageBuilder.withBody(byteUtil.longToBytes(msg))
                     .setDeliveryMode(MessageDeliveryMode.PERSISTENT)
                     .build();
-            rabbitTemplate.convertAndSend(message);
-            log.info("生產者發送消息-內容為：{} ", msg);
+
+            rabbitTemplate.convertAndSend(
+                    mqExchange,
+                    mqRoutingKey,
+                    message,
+                    new CorrelationData(messageId)
+            );
+            log.info("A) 生產者發送消息-傳送資訊 messageId: {}，message: {}, exchange: {}, routingKey: {}",
+                    messageId,
+                    msg,
+                    mqExchange,
+                    mqRoutingKey
+            );
 
         } catch (Exception e) {
-            log.error("生產者發送消息-發生異常：{} ", msg, e.fillInStackTrace());
+            log.error("A) 生產者發送消息-發生異常 messageId: {}，message: {}, exchange: {}, routingKey: {}",
+                    messageId,
+                    msg,
+                    mqExchange,
+                    mqRoutingKey,
+                    e.fillInStackTrace()
+            );
         }
     }
 }

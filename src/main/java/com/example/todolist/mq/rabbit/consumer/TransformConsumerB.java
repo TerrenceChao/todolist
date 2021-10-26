@@ -37,32 +37,28 @@ public class TransformConsumerB extends BaseConsumer<Long> {
     private String maxTask;
 
     @Override
-    protected Long transformMsg(byte[] msgBody) throws Exception {
+    protected Long transformMsg(byte[] msgBody, long deliveryTag) throws Exception {
+        log.info("B) 觸發轉換機制 (todo-task transfer into todo-list) > transformMsg msgBody: {}, deliveryTag: {}", msgBody, deliveryTag);
         return byteUtil.bytesToLong(msgBody);
     }
 
     @Override
-    protected void businessProcess(Long currentTime) throws Exception {
-        try {
-            log.info("觸發轉換機制 B) (todo-task transfer into todo-list) \ncurrentTime: {}", currentTime);
+    protected void businessProcess(Long currentTime, long deliveryTag) throws Exception {
 
-            long previousTime = triggerService.transform(currentTime);
-            if (previousTime < 0) {
-                return;
-            }
+        log.info("B) 觸發轉換機制 (todo-task transfer into todo-list) > \ncurrentTime: {}, deliveryTag: {}", currentTime, deliveryTag);
 
-            int limit = Integer.parseInt(maxTask);
-            BatchVo vo = historyListService.transform(new Date(previousTime), limit);
-            if (! vo.getList().isEmpty()) {
-                TodoTaskVo firstOne = (TodoTaskVo) vo.getList().get(0);
-                triggerService.setLastTimestamp(firstOne.getCreatedAt().getTime());
-            } else {
-                log.info("B) 不滿足 K 個 todo-task，無需轉換  K = {}", limit);
-            }
+        long previousTime = triggerService.transform(currentTime);
+        if (previousTime < 0) {
+            return;
+        }
 
-        } catch (Exception e) {
-            log.error("觸發轉換機制 B) (todo-task transfer into todo-list)-人為手動確認消費-監聽器監聽消費消息-發生異常：", e.fillInStackTrace());
-            throw e;
+        int limit = Integer.parseInt(maxTask);
+        BatchVo vo = historyListService.transform(new Date(previousTime), limit);
+        if (! vo.getList().isEmpty()) {
+            TodoTaskVo firstOne = (TodoTaskVo) vo.getList().get(0);
+            triggerService.setLastTimestamp(firstOne.getCreatedAt().getTime());
+        } else {
+            log.info("B) 觸發轉換機制 (todo-task transfer into todo-list) > 不滿足 K 個 todo-task，無需轉換  K = {}, deliveryTag: {}", limit, deliveryTag);
         }
     }
 

@@ -9,9 +9,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageBuilder;
 import org.springframework.amqp.core.MessageDeliveryMode;
+import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,6 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -31,7 +34,8 @@ public class AttachServiceImpl implements AttachService {
     public ObjectMapper objectMapper;
 
     @Autowired
-    private RabbitTemplate rabbitTemplate;
+    @Qualifier("rabbitTemplateJSONConverter")
+    private RabbitTemplate rabbitTemplateJSONConverter;
 
     @Autowired
     private AttachmentRepository attachRepo;
@@ -64,19 +68,38 @@ public class AttachServiceImpl implements AttachService {
     }
 
     private void sendMessage(JSONObject msg) {
+        String messageId = UUID.randomUUID().toString();
         try {
-            rabbitTemplate.setMessageConverter(new Jackson2JsonMessageConverter());
-            rabbitTemplate.setExchange(env.getProperty("mq.attach.exchange"));
-            rabbitTemplate.setRoutingKey(env.getProperty("mq.attach.routing.key"));
+            String mqExchange = env.getProperty("mq.attach.exchange");
+            String mqRoutingKey = env.getProperty("mq.attach.routing.key");
 
             Message message = MessageBuilder.withBody(objectMapper.writeValueAsBytes(msg))
                     .setDeliveryMode(MessageDeliveryMode.PERSISTENT)
                     .build();
-            rabbitTemplate.convertAndSend(message);
-//            log.info("生產者發送消息-內容為：{} ", msg);
+
+            // for log print before 'convertAndSend'
+            msg.remove("bytes");
+
+            rabbitTemplateJSONConverter.convertAndSend(
+                    mqExchange,
+                    mqRoutingKey,
+                    message,
+                    new CorrelationData(messageId)
+            );
+
+            log.info("生產者發送消息-傳送資訊 messageId: {}，message: {}, exchange: {}, routingKey: {}",
+                    messageId,
+                    msg,
+                    mqExchange,
+                    mqRoutingKey
+            );
 
         } catch (Exception e) {
-            log.error("生產者發送消息-發生異常：{} ", msg, e.fillInStackTrace());
+            log.error("生產者發送消息-發生異常 messageId: {}，message: {}",
+                    messageId,
+                    msg,
+                    e.fillInStackTrace()
+            );
         }
     }
 

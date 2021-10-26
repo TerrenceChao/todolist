@@ -39,27 +39,23 @@ public class TransformConsumerA extends BaseConsumer<Long> {
     private String maxTask;
 
     @Override
-    protected Long transformMsg(byte[] msgBody) throws Exception {
+    protected Long transformMsg(byte[] msgBody, long deliveryTag) throws Exception {
+        log.info("A) 觸發轉換機制 (todo-task transfer into todo-list) > transformMsg msgBody: {}, deliveryTag: {}", msgBody, deliveryTag);
         return byteUtil.bytesToLong(msgBody);
     }
 
     @Override
-    protected void businessProcess(Long previousTime) throws Exception {
-        try {
-            log.info("觸發轉換機制 A) (todo-task transfer into todo-list) \npreviousTime: {}", previousTime);
+    protected void businessProcess(Long previousTime, long deliveryTag) throws Exception {
 
-            int limit = Integer.parseInt(maxTask);
-            BatchVo vo = historyListService.transform(new Date(previousTime), limit);
-            if (! vo.getList().isEmpty()) {
-                TodoTaskVo firstOne = (TodoTaskVo) vo.getList().get(0);
-                triggerService.setLastTimestamp(firstOne.getCreatedAt().getTime());
-            } else {
-                log.info("A) 不滿足 K 個 todo-task，無需轉換  K = {}", limit);
-            }
+        log.info("A) 觸發轉換機制 (todo-task transfer into todo-list) > \npreviousTime: {}, deliveryTag: {}", previousTime, deliveryTag);
 
-        } catch (Exception e) {
-            log.error("觸發轉換機制 A) (todo-task transfer into todo-list)-人為手動確認消費-監聽器監聽消費消息-發生異常：", e.fillInStackTrace());
-            throw e;
+        int limit = Integer.parseInt(maxTask);
+        BatchVo vo = historyListService.transform(new Date(previousTime), limit);
+        if (! vo.getList().isEmpty()) {
+            TodoTaskVo firstOne = (TodoTaskVo) vo.getList().get(0);
+            triggerService.setLastTimestamp(firstOne.getCreatedAt().getTime());
+        } else {
+            log.info("A) 觸發轉換機制 (todo-task transfer into todo-list) > 不滿足 K 個 todo-task，無需轉換  K = {}, deliveryTag: {}", limit, deliveryTag);
         }
     }
 

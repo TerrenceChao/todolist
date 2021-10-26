@@ -118,7 +118,7 @@ public class RabbitConfig {
      */
     @Bean(name = "attachQueue")
     public Queue attachQueue() {
-        return new Queue(env.getProperty("mq.attach.queue"), true, true, false);
+        return new Queue(env.getProperty("mq.attach.queue"), true, false, false);
     }
 
     @Bean
@@ -140,7 +140,7 @@ public class RabbitConfig {
      */
     @Bean(name = "transformQueue")
     public Queue transformQueue() {
-        return new Queue(env.getProperty("mq.transform.queue"), true, true, false);
+        return new Queue(env.getProperty("mq.transform.queue"), true, false, false);
     }
 
     @Bean

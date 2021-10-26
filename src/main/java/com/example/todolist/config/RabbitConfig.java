@@ -1,4 +1,4 @@
-package com.example.todolist.config.mq;
+package com.example.todolist.config;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.*;
@@ -77,20 +77,47 @@ public class RabbitConfig {
      *                                 Binding Queue
      * ==============================================================================
      */
-    @Bean(name = "basicQueue")
-    public Queue basicQueue() {
-        return new Queue(env.getProperty("mq.basic.queue"), true);
+
+    /**
+     * for attachments uploading
+     * @return
+     */
+    @Bean(name = "attachQueue")
+    public Queue attachQueue() {
+        return new Queue(env.getProperty("mq.attach.queue"), true);
     }
 
     @Bean
-    public DirectExchange basicExchange() {
-        return new DirectExchange(env.getProperty("mq.basic.exchange"), true, false);
+    public DirectExchange attachExchange() {
+        return new DirectExchange(env.getProperty("mq.attach.exchange"), true, false);
     }
 
     @Bean
-    public Binding basicBinding() {
-        return BindingBuilder.bind(basicQueue())
-                .to(basicExchange())
-                .with(env.getProperty("mq.basic.routing.key"));
+    public Binding attachBinding() {
+        return BindingBuilder.bind(attachQueue())
+                .to(attachExchange())
+                .with(env.getProperty("mq.attach.routing.key"));
+    }
+
+
+    /**
+     * for transformation from todo-task into todo-list
+     * @return
+     */
+    @Bean(name = "transformQueue")
+    public Queue transformQueue() {
+        return new Queue(env.getProperty("mq.transform.queue"), true);
+    }
+
+    @Bean
+    public DirectExchange transformExchange() {
+        return new DirectExchange(env.getProperty("mq.transform.exchange"), true, false);
+    }
+
+    @Bean
+    public Binding transformBinding() {
+        return BindingBuilder.bind(transformQueue())
+                .to(transformExchange())
+                .with(env.getProperty("mq.transform.routing.key"));
     }
 }

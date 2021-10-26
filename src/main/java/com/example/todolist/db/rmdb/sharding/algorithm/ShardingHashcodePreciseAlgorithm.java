@@ -3,7 +3,7 @@ package com.example.todolist.db.rmdb.sharding.algorithm;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class HashcodeShardingAlgorithm extends BaseHashcodeAlgorithm {
+public class ShardingHashcodePreciseAlgorithm extends BaseHashcodePreciseAlgorithm {
 
     @Override
     protected int shardByHashcode(String hashcode) {

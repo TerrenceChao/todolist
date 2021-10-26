@@ -8,21 +8,25 @@ public class Response {
     private String message;
     private Object data;
 
-    public Response(){
+    public Response() {
+    }
+
+    public Response(int code, String message) {
+        this.code = code;
+        this.message = message;
+        this.data = null;
     }
 
     public Response(ResponseCode responseCode) {
         this.code = responseCode.getCode();
-        this.message=responseCode.getMessage();
+        this.message = responseCode.getMessage();
     }
 
-    public Response(ResponseCode responseCode,Object data) {
+    public Response(ResponseCode responseCode, Object data) {
         this.code = responseCode.getCode();
-        this.message=responseCode.getMessage();
-        this.data=data;
+        this.message = responseCode.getMessage();
+        this.data = data;
     }
-
-
 
 
     public Response setCode(ResponseCode responseCode) {

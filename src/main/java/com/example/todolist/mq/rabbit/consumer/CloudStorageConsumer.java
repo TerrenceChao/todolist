@@ -12,8 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.env.Environment;
 import org.springframework.messaging.handler.annotation.Payload;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Component;
 
 import java.util.Objects;
@@ -26,7 +24,6 @@ import java.util.Objects;
  */
 @Slf4j
 @Component
-@EnableAsync
 public class CloudStorageConsumer extends BaseConsumer<JSONObject> {
 
     @Autowired
@@ -43,12 +40,12 @@ public class CloudStorageConsumer extends BaseConsumer<JSONObject> {
     private AttachmentRepository attachRepo;
 
     @Override
-    public JSONObject transformMsg(byte[] msgBody) throws Exception {
+    protected JSONObject transformMsg(byte[] msgBody) throws Exception {
         return objectMapper.readValue(msgBody, JSONObject.class);
     }
 
     @Override
-    public void businessProcess(JSONObject payload) throws Exception {
+    protected void businessProcess(JSONObject payload) throws Exception {
         try {
             log.info("Uploading Google Cloud Storage \ntid: {}, \nfilename: {}, \nhash: {}", payload.getString("tid"), payload.getString("filename"), payload.getString("hash"));
 
@@ -72,9 +69,8 @@ public class CloudStorageConsumer extends BaseConsumer<JSONObject> {
         }
     }
 
-    @Async
     @RabbitListener(
-            queues = "${mq.basic.queue}",
+            queues = "${mq.attach.queue}",
             containerFactory = "singleListenerContainer"
     )
     public void uploadAttach(@Payload Message message, Channel channel) throws Exception {

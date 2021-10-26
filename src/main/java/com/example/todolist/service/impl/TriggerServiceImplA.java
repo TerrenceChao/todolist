@@ -11,6 +11,7 @@ import org.springframework.amqp.core.MessageDeliveryMode;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Primary;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
@@ -18,8 +19,9 @@ import java.util.Objects;
 
 
 @Slf4j
-@Service
-public class TriggerServiceImpl implements TriggerService {
+@Primary
+@Service("triggerServiceA")
+public class TriggerServiceImplA implements TriggerService {
 
     @Autowired
     private RedissonClient redisson;
@@ -47,7 +49,7 @@ public class TriggerServiceImpl implements TriggerService {
 
     private long max;
 
-    public TriggerServiceImpl(RedissonClient redisson, RabbitTemplate rabbitTemplate, ByteUtil byteUtil, Environment env) {
+    public TriggerServiceImplA(RedissonClient redisson, RabbitTemplate rabbitTemplate, ByteUtil byteUtil, Environment env) {
         this.redisson = redisson;
         this.rabbitTemplate = rabbitTemplate;
         this.byteUtil = byteUtil;
@@ -56,16 +58,27 @@ public class TriggerServiceImpl implements TriggerService {
     }
 
     @Override
-    public void transformAsync(Long timestamp) {
+    public void transformAsync(Long currentTimestamp) {
         // TODO 用 Redisson 是否過慢!?
         RAtomicLong taskCnt = redisson.getAtomicLong(taskCountKey);
         if (taskCnt.addAndGet(1L) % max == 1) {
-            // previousTime = firstTimestamp of last round
+            // previousTime = firstTimestamp of previous round
             RAtomicLong previousTime = redisson.getAtomicLong(taskFirstTimestampKey);
             sendMessage(previousTime.get());
-            // timestamp = firstTimestamp of current round
-            previousTime.set(timestamp);
+            // currentTimestamp = firstTimestamp of current round
+            previousTime.set(currentTimestamp);
         }
+//        log.info("Trigger A) transformAsync");
+    }
+
+    /**
+     * do nothing in TriggerServiceA (TriggerServiceImplA)
+     * @param timestamp
+     * @return
+     */
+    @Override
+    public long transform(Long timestamp) {
+        return 0;
     }
 
     /**

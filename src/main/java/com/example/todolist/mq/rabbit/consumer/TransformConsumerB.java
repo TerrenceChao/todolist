@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
@@ -19,8 +20,8 @@ import java.util.Date;
 
 
 @Slf4j
-@Component
-public class TransformConsumer extends BaseConsumer<Long> {
+@Component("transformConsumerB")
+public class TransformConsumerB extends BaseConsumer<Long> {
 
     @Autowired
     private ByteUtil byteUtil;
@@ -29,33 +30,35 @@ public class TransformConsumer extends BaseConsumer<Long> {
     private HistoryListService historyListService;
 
     @Autowired
+    @Qualifier("triggerServiceB")
     private TriggerService triggerService;
 
     @Value("${todo-task.max}")
     private String maxTask;
 
     @Override
-    protected Long transformMsg(byte[] msgBody) throws Exception {
+    protected Long transformMsg(byte[] msgBody, long deliveryTag) throws Exception {
+        log.info("B) 觸發轉換機制 (todo-task transfer into todo-list) > transformMsg msgBody: {}, deliveryTag: {}", msgBody, deliveryTag);
         return byteUtil.bytesToLong(msgBody);
     }
 
     @Override
-    protected void businessProcess(Long previousTime) throws Exception {
-        try {
-            log.info("觸發轉換機制 (todo-task transfer into todo-list) \npreviousTime: {}", previousTime);
+    protected void businessProcess(Long currentTime, long deliveryTag) throws Exception {
 
-            int limit = Integer.parseInt(maxTask);
-            BatchVo vo = historyListService.transform(new Date(previousTime), limit);
-            if (! vo.getList().isEmpty()) {
-                TodoTaskVo firstOne = (TodoTaskVo) vo.getList().get(0);
-                triggerService.setLastTimestamp(firstOne.getCreatedAt().getTime());
-            } else {
-                log.info("不滿足 K 個 todo-task，無需轉換  K = {}", limit);
-            }
+        log.info("B) 觸發轉換機制 (todo-task transfer into todo-list) > \ncurrentTime: {}, deliveryTag: {}", currentTime, deliveryTag);
 
-        } catch (Exception e) {
-            log.error("觸發轉換機制 (todo-task transfer into todo-list)-人為手動確認消費-監聽器監聽消費消息-發生異常：", e.fillInStackTrace());
-            throw e;
+        long previousTime = triggerService.transform(currentTime);
+        if (previousTime < 0) {
+            return;
+        }
+
+        int limit = Integer.parseInt(maxTask);
+        BatchVo vo = historyListService.transform(new Date(previousTime), limit);
+        if (! vo.getList().isEmpty()) {
+            TodoTaskVo firstOne = (TodoTaskVo) vo.getList().get(0);
+            triggerService.setLastTimestamp(firstOne.getCreatedAt().getTime());
+        } else {
+            log.info("B) 觸發轉換機制 (todo-task transfer into todo-list) > 不滿足 K 個 todo-task，無需轉換  K = {}, deliveryTag: {}", limit, deliveryTag);
         }
     }
 

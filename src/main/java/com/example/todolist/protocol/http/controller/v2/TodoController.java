@@ -10,6 +10,7 @@ import com.example.todolist.service.TodoService;
 import com.example.todolist.service.TriggerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -37,6 +38,7 @@ public class TodoController {
     private HistoryListService historyListService;
 
     @Autowired
+    @Qualifier("triggerServiceB")
     private TriggerService triggerService;
 
     /**
@@ -65,7 +67,7 @@ public class TodoController {
         // step 3 >> async + message queue
         triggerService.transformAsync(date.getTime());
 
-        return ResponseResult.successPost(tid);
+        return ResponseResult.successPost(taskVo);
     }
 
 

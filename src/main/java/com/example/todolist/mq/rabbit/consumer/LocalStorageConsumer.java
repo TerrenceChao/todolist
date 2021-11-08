@@ -26,25 +26,21 @@ public class LocalStorageConsumer extends BaseConsumer<JSONObject> {
     private ObjectMapper objectMapper;
 
     @Override
-    protected JSONObject transformMsg(byte[] msgBody) throws Exception {
+    protected JSONObject transformMsg(byte[] msgBody, long deliveryTag) throws Exception {
+        log.info("本地儲存檔案 > transformMsg deliveryTag: {}", deliveryTag);
         return objectMapper.readValue(msgBody, JSONObject.class);
     }
 
     @Override
-    protected void businessProcess(JSONObject payload) throws Exception {
-        try {
-            log.info("\n本地儲存檔案 \ntid: {}, \nfilename: {}, \nhash: {}\n", payload.getString("tid"), payload.getString("filename"), payload.getString("hash"));
+    protected void businessProcess(JSONObject payload, long deliveryTag) throws Exception {
+        log.info("本地儲存檔案 > \ntid: {}, \nfilename: {}, \nhash: {}, \ndeliveryTag: {}\n", payload.getString("tid"), payload.getString("filename"), payload.getString("hash"), deliveryTag);
 
-            String filename = payload.getString("filename");
-            String fileOutput = "/Users/albert/Desktop/todo-images/" + filename;
-            Path path = Paths.get(fileOutput);
+        String filename = payload.getString("filename");
+        String fileOutput = "/Users/albert/Desktop/todo-images/" + filename;
+        Path path = Paths.get(fileOutput);
 
-            byte[] bytes = payload.getBytes("bytes");
-            Files.write(path, bytes);
-        } catch (Exception e) {
-            log.error("本地儲存檔案-人為手動確認消費-監聽器監聽消費消息-發生異常：", e.fillInStackTrace());
-            throw e;
-        }
+        byte[] bytes = payload.getBytes("bytes");
+        Files.write(path, bytes);
     }
 
 //    @Async

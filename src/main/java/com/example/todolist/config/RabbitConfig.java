@@ -6,9 +6,11 @@ import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFacto
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.core.env.Environment;
 
 
@@ -40,16 +42,48 @@ public class RabbitConfig {
         // 設置併發消費者中每個實例拉取的消息數量：1
         factory.setPrefetchCount(1);
 
+        // 將 ack mode 設置為 "手動"
+        factory.setAcknowledgeMode(AcknowledgeMode.MANUAL);
+
         return factory;
     }
 
-    @Bean
+    @Primary
+    @Bean("rabbitTemplate")
     public RabbitTemplate rabbitTemplate() {
         // 設置 發送消息後返回確認訊息
         connectionFactory.setPublisherReturns(true);
 
         RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
         rabbitTemplate.setMandatory(true);
+        // 發送消息後，如果發送成功，則輸出“消息發送成功”的訊息
+        rabbitTemplate.setConfirmCallback(new RabbitTemplate.ConfirmCallback() {
+            @Override
+            public void confirm(CorrelationData correlationData, boolean ack, String cause) {
+                log.info("消息發送成功: correlationData({}), ack({}) cause({})", correlationData, ack, cause);
+            }
+        });
+
+        // 發送消息後，如果發送失敗，則輸出“消息發送失敗-消息丟失”的訊息
+        rabbitTemplate.setReturnsCallback(new RabbitTemplate.ReturnsCallback() {
+            @Override
+            public void returnedMessage(ReturnedMessage returnedMessage) {
+                log.info("消息丟失: returnedMessage({})", returnedMessage);
+            }
+        });
+
+        return rabbitTemplate;
+    }
+
+    @Bean("rabbitTemplateJSONConverter")
+    public RabbitTemplate rabbitTemplateJSONConverter() {
+        // 設置 發送消息後返回確認訊息
+        connectionFactory.setPublisherReturns(true);
+
+        RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
+        rabbitTemplate.setMessageConverter(new Jackson2JsonMessageConverter());
+        rabbitTemplate.setMandatory(true);
+
         // 發送消息後，如果發送成功，則輸出“消息發送成功”的訊息
         rabbitTemplate.setConfirmCallback(new RabbitTemplate.ConfirmCallback() {
             @Override
@@ -84,7 +118,7 @@ public class RabbitConfig {
      */
     @Bean(name = "attachQueue")
     public Queue attachQueue() {
-        return new Queue(env.getProperty("mq.attach.queue"), true);
+        return new Queue(env.getProperty("mq.attach.queue"), true, false, false);
     }
 
     @Bean
@@ -106,7 +140,7 @@ public class RabbitConfig {
      */
     @Bean(name = "transformQueue")
     public Queue transformQueue() {
-        return new Queue(env.getProperty("mq.transform.queue"), true);
+        return new Queue(env.getProperty("mq.transform.queue"), true, false, false);
     }
 
     @Bean
